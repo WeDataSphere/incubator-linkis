@@ -52,7 +52,6 @@ import org.apache.linkis.storage.domain.{Column, DataType}
 import org.apache.linkis.storage.resultset.ResultSetFactory
 import org.apache.linkis.storage.resultset.table.{TableMetaData, TableRecord}
 
-import org.apache.commons.collections.MapUtils
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hive.common.HiveInterruptUtils
 import org.apache.hadoop.hive.conf.HiveConf
@@ -140,8 +139,7 @@ class HiveEngineConnExecutor(
       engineExecutorContext: EngineExecutionContext,
       code: String
   ): ExecuteResponse = {
-    readResByObject = MapUtils.getBoolean(
-      engineExecutorContext.getProperties,
+    readResByObject = engineExecutorContext.getProperties.getOrDefault(
       JobRequestConstants.LINKIS_HIVE_EC_READ_RESULT_BY_OBJECT,
       false
     )

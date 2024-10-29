@@ -46,7 +46,7 @@ public class UserDepartmentInfoSync {
 
   private static final Logger logger = LoggerFactory.getLogger(ResourceMonitor.class);
 
-  @Scheduled(cron = "${linkis.monitor.org.user.sync.cron:0 0 0 0/7 * ?}")
+  @Scheduled(cron = "${linkis.monitor.org.user.sync.cron:0 0 0 1/7 * ?}")
   public static void DepartmentInfoSync() {
 
     UserDepartmentInfoMapper userDepartmentInfoMapper = MapperFactory.getUserDepartmentInfoMapper();
