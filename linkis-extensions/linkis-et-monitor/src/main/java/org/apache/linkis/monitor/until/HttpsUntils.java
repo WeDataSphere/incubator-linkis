@@ -108,8 +108,10 @@ public class HttpsUntils {
             .build();
     KeyvalueResult result = client.getConfKeyValue(build);
     Map data = MapUtils.getMap(result.getResultMap(), "data", new HashMap<>());
-    Map configValues = MapUtils.getMap(data, "configValues", new HashMap<>());
-    return MapUtils.getString(configValues, "configValue", "");
+    ArrayList arrayList =
+        BDPJettyServerHelper.gson().fromJson(data.get("configValues").toString(), ArrayList.class);
+    Map map = BDPJettyServerHelper.gson().fromJson(arrayList.get(0).toString(), Map.class);
+    return MapUtils.getString(map, "configValue", "");
   }
 
   public static Map getDatasourceConf(String user, String datasourceName) {
@@ -120,7 +122,8 @@ public class HttpsUntils {
             .setDataSourceName(datasourceName)
             .setUser(user)
             .build();
-    GetInfoPublishedByDataSourceNameResult result = client.getInfoByDataSourceInfo(dataSourceParamsAction);
+    GetInfoPublishedByDataSourceNameResult result =
+        client.getInfoByDataSourceInfo(dataSourceParamsAction);
     Map data = MapUtils.getMap(result.getResultMap(), "data", new HashMap<>());
     Map datasourceInfoMap = MapUtils.getMap(data, "info", new HashMap<>());
     return datasourceInfoMap;
