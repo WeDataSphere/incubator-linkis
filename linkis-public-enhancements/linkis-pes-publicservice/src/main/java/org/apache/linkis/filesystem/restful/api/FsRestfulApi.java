@@ -1508,11 +1508,15 @@ public class FsRestfulApi {
         FsPath fsPathNew = new FsPath(newPath);
         outputStream = fileSystem.write(fsPathNew, true);
         IOUtils.copy(is, outputStream);
-      } catch (IOException e) {
+      } catch (Exception e) {
         return Message.error("文件上传失败：" + e.getMessage());
       } finally {
-        outputStream.close();
-        is.close();
+        if (outputStream != null) {
+          IOUtils.closeQuietly(outputStream);
+        }
+        if (is != null) {
+          IOUtils.closeQuietly(is);
+        }
       }
     }
     // 返回成功消息并包含文件地址
