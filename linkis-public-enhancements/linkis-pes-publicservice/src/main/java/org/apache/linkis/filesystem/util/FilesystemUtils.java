@@ -118,8 +118,14 @@ public class FilesystemUtils {
         new TarArchiveInputStream(new GzipCompressorInputStream(inputStream))) {
       TarArchiveEntry entry;
       while ((entry = tarInput.getNextTarEntry()) != null) {
-        if (entry.isDirectory() && entry.getName().endsWith("/" + folder + "/")) {
+        if (entry.isDirectory()
+            && entry.getName().endsWith(FsPath.SEPARATOR + folder + FsPath.SEPARATOR)) {
           return entry.getName();
+        }
+        if (entry.getName().contains(FsPath.SEPARATOR + folder + FsPath.SEPARATOR)) {
+          String delimiter = FsPath.SEPARATOR + folder + FsPath.SEPARATOR;
+          int delimiterIndex = entry.getName().indexOf(delimiter);
+          return entry.getName().substring(0, delimiterIndex + delimiter.length());
         }
       }
     } catch (Exception e) {
@@ -146,7 +152,8 @@ public class FilesystemUtils {
     try {
       TarArchiveEntry entry;
       while ((entry = tarInput.getNextTarEntry()) != null) {
-        if (!entry.isDirectory() && entry.getName().contains("/" + folder + "/")) {
+        if (!entry.isDirectory()
+            && entry.getName().contains(FsPath.SEPARATOR + folder + FsPath.SEPARATOR)) {
           // \dist\py_mysql-1.0.tar\py_mysql-1.0\py_mysql\lib\__init__.py
           ZipEntry zipEntry = new ZipEntry(entry.getName().substring(rootPath.length()));
           zos.putNextEntry(zipEntry);
