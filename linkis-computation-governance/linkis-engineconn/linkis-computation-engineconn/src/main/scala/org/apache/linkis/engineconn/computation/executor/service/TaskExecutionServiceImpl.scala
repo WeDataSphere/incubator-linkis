@@ -90,6 +90,7 @@ import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
 
 import java.util
+import java.util.Map
 import java.util.concurrent._
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -233,10 +234,14 @@ class TaskExecutionServiceImpl
           )
       ) {
         System.getProperties.put(ComputationExecutorConf.ONLY_SQL_USE_UDF_KEY, udfNames)
+        logger.info("put system prop: {}", udfNames)
         val codeType: String = LabelUtil.getCodeType(requestTask.getLabels)
         val languageType: String = CodeAndRunTypeUtils.getLanguageTypeByCodeType(codeType)
         System.getProperties.put(ComputationExecutorConf.CODE_TYPE, languageType)
-        logger.info(s"add spacial udf check with job id ${jobId}.")
+        logger.info(
+          s"add spacial udf check with job id ${jobId}. with: {}",
+          System.getProperties.get(ComputationExecutorConf.ONLY_SQL_USE_UDF_KEY)
+        )
       }
 
       val task = new CommonEngineConnTask(taskId, retryAble)
