@@ -65,7 +65,7 @@ public class LinkisErrorCodeHandler
   public static LinkisErrorCodeHandler getInstance() {
     if (null == linkisErrorCodeHandler) { // NOSONAR
       synchronized (LinkisErrorCodeHandler.class) {
-        if (null == linkisErrorCodeHandler) {
+        if (null == linkisErrorCodeHandler) { // NOSONAR
           linkisErrorCodeHandler = new LinkisErrorCodeHandler();
         }
       }

@@ -34,7 +34,7 @@ public class LinkisErrorCodeManager {
   public static LinkisErrorCodeManager getInstance() {
     if (linkisErrorCodeManager == null) { // NOSONAR
       synchronized (LinkisErrorCodeManager.class) {
-        if (linkisErrorCodeManager == null) {
+        if (linkisErrorCodeManager == null) { // NOSONAR
           linkisErrorCodeManager = new LinkisErrorCodeManager();
         }
       }

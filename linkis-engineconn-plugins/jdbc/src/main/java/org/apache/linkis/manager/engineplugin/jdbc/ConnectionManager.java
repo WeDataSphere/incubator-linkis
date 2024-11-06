@@ -52,7 +52,7 @@ public class ConnectionManager {
   private final Map<String, DataSource> dataSourceFactories;
   private final JDBCDataSourceConfigurations jdbcDataSourceConfigurations;
 
-  private static volatile ConnectionManager connectionManager;
+  private static volatile ConnectionManager connectionManager; // NOSONAR
   private ScheduledExecutorService scheduledExecutorService;
   private Integer kinitFailCount = 0;
 
@@ -64,7 +64,7 @@ public class ConnectionManager {
   public static ConnectionManager getInstance() {
     if (connectionManager == null) { // NOSONAR
       synchronized (ConnectionManager.class) {
-        if (connectionManager == null) {
+        if (connectionManager == null) { // NOSONAR
           connectionManager = new ConnectionManager();
         }
       }

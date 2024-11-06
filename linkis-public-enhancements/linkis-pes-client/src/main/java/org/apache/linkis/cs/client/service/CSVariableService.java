@@ -101,7 +101,7 @@ public class CSVariableService implements VariableService {
   public static CSVariableService getInstance() {
     if (null == csVariableService) { // NOSONAR
       synchronized (CSVariableService.class) {
-        if (null == csVariableService) {
+        if (null == csVariableService) { // NOSONAR
           csVariableService = new CSVariableService();
         }
       }

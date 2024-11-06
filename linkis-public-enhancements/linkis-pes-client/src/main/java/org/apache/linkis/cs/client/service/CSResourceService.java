@@ -45,7 +45,7 @@ public class CSResourceService implements ResourceService {
   public static CSResourceService getInstance() {
     if (null == csResourceService) { // NOSONAR
       synchronized (CSResourceService.class) {
-        if (null == csResourceService) {
+        if (null == csResourceService) { // NOSONAR
           csResourceService = new CSResourceService();
         }
       }
