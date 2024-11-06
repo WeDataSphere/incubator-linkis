@@ -151,12 +151,12 @@ public class DefaultContextIDCallbackEngine implements CSIDListener, ContextIDCa
       synchronized (DefaultContextIDCallbackEngine.class) { // NOSONAR
         if (singleDefaultContextIDCallbackEngine == null) { // NOSONAR
           DefaultContextIDCallbackEngine tmpEngine = new DefaultContextIDCallbackEngine();
-          singleDefaultContextIDCallbackEngine = tmpEngine;
           DefaultContextListenerManager instanceContextListenerManager =
               DefaultContextListenerManager.getInstance();
           instanceContextListenerManager
               .getContextAsyncListenerBus()
-              .addListener(singleDefaultContextIDCallbackEngine);
+              .addListener(tmpEngine);
+          singleDefaultContextIDCallbackEngine = tmpEngine;
           logger.info("add listerner singleDefaultContextIDCallbackEngine success");
         }
       }
