@@ -30,7 +30,7 @@ public class ConnCacheManager implements CacheManager {
 
   public static CacheManager custom() {
     if (null == manager) { // NOSONAR
-      synchronized (ConnCacheManager.class) {
+      synchronized (ConnCacheManager.class) { // NOSONAR
         if (null == manager) { // NOSONAR
           manager = new ConnCacheManager();
         }

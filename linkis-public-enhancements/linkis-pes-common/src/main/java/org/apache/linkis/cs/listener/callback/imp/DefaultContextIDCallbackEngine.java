@@ -148,7 +148,7 @@ public class DefaultContextIDCallbackEngine implements CSIDListener, ContextIDCa
 
   public static DefaultContextIDCallbackEngine getInstance() {
     if (singleDefaultContextIDCallbackEngine == null) { // NOSONAR
-      synchronized (DefaultContextIDCallbackEngine.class) {
+      synchronized (DefaultContextIDCallbackEngine.class) { // NOSONAR
         if (singleDefaultContextIDCallbackEngine == null) { // NOSONAR
           DefaultContextIDCallbackEngine tmpEngine = new DefaultContextIDCallbackEngine();
           singleDefaultContextIDCallbackEngine = tmpEngine;

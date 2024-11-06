@@ -27,7 +27,7 @@ public class ContextClientListenerManager {
   public static ContextClientListenerBus<ContextClientListener, Event>
       getContextClientListenerBus() {
     if (contextClientListenerBus == null) { // NOSONAR
-      synchronized (ContextClientListenerManager.class) {
+      synchronized (ContextClientListenerManager.class) { // NOSONAR
         if (contextClientListenerBus == null) { // NOSONAR
           contextClientListenerBus = new ContextClientListenerBus<ContextClientListener, Event>();
         }

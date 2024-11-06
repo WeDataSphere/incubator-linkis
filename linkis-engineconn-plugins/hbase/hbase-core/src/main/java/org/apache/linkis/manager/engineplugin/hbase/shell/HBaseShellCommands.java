@@ -41,7 +41,7 @@ public class HBaseShellCommands {
 
   public static Set<String> getAllCommands() throws IOException {
     if (commandsSet == null) { // NOSONAR
-      synchronized (HBaseShellCommands.class) {
+      synchronized (HBaseShellCommands.class) { // NOSONAR
         if (commandsSet == null) { // NOSONAR
           Set<String> sortedSet = new TreeSet<>();
           URL commandFilesUrl =

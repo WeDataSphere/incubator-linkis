@@ -62,7 +62,7 @@ public class SchedulerManager {
 
   public static ThreadPoolExecutor getCachedThreadPoolExecutor() {
     if (cachedThreadPool == null) { // NOSONAR
-      synchronized (SchedulerManager.class) {
+      synchronized (SchedulerManager.class) { // NOSONAR
         if (cachedThreadPool == null) { // NOSONAR
           cachedThreadPool = newCachedThreadPool(THREAD_NUM, THREAD_NAME, IS_DEAMON);
         }
@@ -73,7 +73,7 @@ public class SchedulerManager {
 
   public static ExecutorService getFixedThreadPool() {
     if (fixedThreadPool == null) { // NOSONAR
-      synchronized (SchedulerManager.class) {
+      synchronized (SchedulerManager.class) { // NOSONAR
         if (fixedThreadPool == null) { // NOSONAR
           fixedThreadPool = newFixedThreadPool(THREAD_NUM, THREAD_NAME, IS_DEAMON);
         }

@@ -84,8 +84,8 @@ public class HBaseConnectionManager {
 
   public static HBaseConnectionManager getInstance() {
     if (instance == null) { // NOSONAR
-      synchronized (HBaseConnectionManager.class) {
-        if (instance == null) {
+      synchronized (HBaseConnectionManager.class) { // NOSONAR
+        if (instance == null) { // NOSONAR
           instance = new HBaseConnectionManager();
         }
       }

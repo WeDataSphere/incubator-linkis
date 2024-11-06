@@ -41,7 +41,7 @@ public class EngineTypeLabelCreator {
 
   private static void init() {
     if (null == defaultVersion) { // NOSONAR
-      synchronized (EngineTypeLabelCreator.class) {
+      synchronized (EngineTypeLabelCreator.class) { // NOSONAR
         if (null == defaultVersion) { // NOSONAR
           Map<String, String> tmpVersion = new HashMap<>(16);
           tmpVersion.put(
