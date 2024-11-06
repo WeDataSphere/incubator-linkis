@@ -48,7 +48,7 @@ public class UJESClientFactory {
 
   public static UJESClient getReusable(VarAccess stdVarAccess) {
     if (client == null) { // NOSONAR
-      synchronized (UJESClientFactory.class) {
+      synchronized (UJESClientFactory.class) { // NOSONAR
         if (client == null) { // NOSONAR
           client = getNew(stdVarAccess);
         }
