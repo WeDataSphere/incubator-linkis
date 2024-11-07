@@ -74,10 +74,8 @@ public class ContextSerializationHelper extends AbstractSerializationHelper {
     if (contextSerializationHelper == null) { // NOSONAR
       synchronized (ContextSerializationHelper.class) { // NOSONAR
         if (contextSerializationHelper == null) { // NOSONAR
-          ContextSerializationHelper tmpContextSerializationHelper =
-              new ContextSerializationHelper();
+          contextSerializationHelper = new ContextSerializationHelper();
           try {
-            contextSerializationHelper = tmpContextSerializationHelper;
             contextSerializationHelper.init();
           } catch (CSErrorException e) {
             logger.error("Failed init ContextSerializationHelper, now exit process", e);

@@ -46,9 +46,8 @@ public class ContextAsyncListenerBus<L extends ContextAsyncEventListener, E exte
     if (contextAsyncListenerBus == null) { // NOSONAR
       synchronized (ContextAsyncListenerBus.class) { // NOSONAR
         if (contextAsyncListenerBus == null) { // NOSONAR
-          ContextAsyncListenerBus tmpBus = new ContextAsyncListenerBus();
-          tmpBus.start();
-          contextAsyncListenerBus = tmpBus;
+          contextAsyncListenerBus = new ContextAsyncListenerBus();
+          contextAsyncListenerBus.start();
         }
       }
     }
