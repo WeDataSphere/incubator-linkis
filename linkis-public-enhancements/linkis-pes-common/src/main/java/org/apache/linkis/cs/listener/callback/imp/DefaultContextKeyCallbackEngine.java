@@ -165,10 +165,10 @@ public class DefaultContextKeyCallbackEngine implements CSKeyListener, ContextKe
         if (singleDefaultContextKeyCallbackEngine == null) { // NOSONAR
           singleDefaultContextKeyCallbackEngine = new DefaultContextKeyCallbackEngine();
           DefaultContextListenerManager instanceContextListenerManager =
-                  DefaultContextListenerManager.getInstance();
+              DefaultContextListenerManager.getInstance();
           instanceContextListenerManager
-                  .getContextAsyncListenerBus()
-                  .addListener(singleDefaultContextKeyCallbackEngine);
+              .getContextAsyncListenerBus()
+              .addListener(singleDefaultContextKeyCallbackEngine);
           logger.info("add listerner singleDefaultContextKeyCallbackEngine success");
         }
       }

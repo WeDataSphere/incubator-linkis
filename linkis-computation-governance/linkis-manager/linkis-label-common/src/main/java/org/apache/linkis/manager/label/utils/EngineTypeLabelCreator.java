@@ -45,48 +45,48 @@ public class EngineTypeLabelCreator {
         if (null == defaultVersion) {
           defaultVersion = new HashMap<>(16);
           defaultVersion.put(
-                  EngineType.SPARK().toString(), LabelCommonConfig.SPARK_ENGINE_VERSION.getValue());
+              EngineType.SPARK().toString(), LabelCommonConfig.SPARK_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.HIVE().toString(), LabelCommonConfig.HIVE_ENGINE_VERSION.getValue());
+              EngineType.HIVE().toString(), LabelCommonConfig.HIVE_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.PYTHON().toString(), LabelCommonConfig.PYTHON_ENGINE_VERSION.getValue());
+              EngineType.PYTHON().toString(), LabelCommonConfig.PYTHON_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.IO_ENGINE_FILE().toString(),
-                  LabelCommonConfig.FILE_ENGINE_VERSION.getValue());
+              EngineType.IO_ENGINE_FILE().toString(),
+              LabelCommonConfig.FILE_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.IO_ENGINE_HDFS().toString(),
-                  LabelCommonConfig.HDFS_ENGINE_VERSION.getValue());
+              EngineType.IO_ENGINE_HDFS().toString(),
+              LabelCommonConfig.HDFS_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.JDBC().toString(), LabelCommonConfig.JDBC_ENGINE_VERSION.getValue());
+              EngineType.JDBC().toString(), LabelCommonConfig.JDBC_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.PIPELINE().toString(),
-                  LabelCommonConfig.PIPELINE_ENGINE_VERSION.getValue());
+              EngineType.PIPELINE().toString(),
+              LabelCommonConfig.PIPELINE_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.SHELL().toString(), LabelCommonConfig.SHELL_ENGINE_VERSION.getValue());
+              EngineType.SHELL().toString(), LabelCommonConfig.SHELL_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.APPCONN().toString(), LabelCommonConfig.APPCONN_ENGINE_VERSION.getValue());
+              EngineType.APPCONN().toString(), LabelCommonConfig.APPCONN_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.FLINK().toString(), LabelCommonConfig.FLINK_ENGINE_VERSION.getValue());
+              EngineType.FLINK().toString(), LabelCommonConfig.FLINK_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.PRESTO().toString(), LabelCommonConfig.PRESTO_ENGINE_VERSION.getValue());
+              EngineType.PRESTO().toString(), LabelCommonConfig.PRESTO_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.NEBULA().toString(), LabelCommonConfig.NEBULA_ENGINE_VERSION.getValue());
+              EngineType.NEBULA().toString(), LabelCommonConfig.NEBULA_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.SQOOP().toString(), LabelCommonConfig.SQOOP_ENGINE_VERSION.getValue());
+              EngineType.SQOOP().toString(), LabelCommonConfig.SQOOP_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.DATAX().toString(), LabelCommonConfig.DATAX_ENGINE_VERSION.getValue());
+              EngineType.DATAX().toString(), LabelCommonConfig.DATAX_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.OPENLOOKENG().toString(),
-                  LabelCommonConfig.OPENLOOKENG_ENGINE_VERSION.getValue());
+              EngineType.OPENLOOKENG().toString(),
+              LabelCommonConfig.OPENLOOKENG_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.TRINO().toString(),
-                  LabelCommonConfig.TRINO_ENGINE_CONN_VERSION.getValue());
+              EngineType.TRINO().toString(),
+              LabelCommonConfig.TRINO_ENGINE_CONN_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.ELASTICSEARCH().toString(),
-                  LabelCommonConfig.ELASTICSEARCH_ENGINE_VERSION.getValue());
+              EngineType.ELASTICSEARCH().toString(),
+              LabelCommonConfig.ELASTICSEARCH_ENGINE_VERSION.getValue());
           defaultVersion.put(
-                  EngineType.SEATUNNEL().toString(),
-                  LabelCommonConfig.SEATUNNEL_ENGINE_CONN_VERSION.getValue());
+              EngineType.SEATUNNEL().toString(),
+              LabelCommonConfig.SEATUNNEL_ENGINE_CONN_VERSION.getValue());
           defaultVersion.put("*", "*");
         }
       }
