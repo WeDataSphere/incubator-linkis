@@ -32,6 +32,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,12 +102,13 @@ public class UserDepartmentInfoSync {
         List<List<UserDepartmentInfo>> syncLists = Lists.partition(syncList, pagesize);
         syncLists.forEach(
             list -> {
+              List<UserDepartmentInfo> insertList = new ArrayList<>();
               list.forEach(
                   departSyncInfo -> {
                     UserDepartmentInfo userDepartmentInfo =
                         userDepartmentInfoMapper.selectUser(departSyncInfo.getUserName());
                     if (null == userDepartmentInfo) {
-                      userDepartmentInfoMapper.insertUser(departSyncInfo);
+                      insertList.add(departSyncInfo);
                     } else {
                       if ((!departSyncInfo.getOrgId().equals(userDepartmentInfo.getOrgId()))
                           || (!departSyncInfo
@@ -116,6 +118,10 @@ public class UserDepartmentInfoSync {
                       }
                     }
                   });
+              // 每次5000遍历完成后批量处理
+              if (!CollectionUtils.isEmpty(insertList)) {
+                userDepartmentInfoMapper.batchInsertUsers(insertList);
+              }
             });
       }
     }
