@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,31 +46,33 @@ import org.slf4j.LoggerFactory;
 public class UserDepartmentInfoSync {
 
   private static final Logger logger = LoggerFactory.getLogger(ResourceMonitor.class);
+  private static final int pagesize = 5000;
+
+  private static final UserDepartmentInfoMapper userDepartmentInfoMapper =
+      MapperFactory.getUserDepartmentInfoMapper();
 
   @Scheduled(cron = "${linkis.monitor.org.user.sync.cron:0 0 0 1/7 * ?}")
   public static void DepartmentInfoSync() {
-
-    UserDepartmentInfoMapper userDepartmentInfoMapper = MapperFactory.getUserDepartmentInfoMapper();
     // 获取linkis_org_user_sync信息
-    List<UserDepartmentInfo> userDepartmentInfos = userDepartmentInfoMapper.selectAllUsers();
-
-    if (CollectionUtils.isEmpty(userDepartmentInfos)) {
+    List<UserDepartmentInfo> departSyncList = userDepartmentInfoMapper.selectAllUsers();
+    if (CollectionUtils.isEmpty(departSyncList)) {
       logger.info("No user department info to sync");
       // 并且发送告警通知
       return;
     } else {
       logger.info("Start to sync user department info");
-
+      // 收集异常用户
       List<UserDepartmentInfo> alterList =
-          userDepartmentInfos.stream()
+          departSyncList.stream()
               .filter(
                   userDepartmentInfo ->
                       StringUtils.isNotBlank(userDepartmentInfo.getUserName())
                           && (StringUtils.isBlank(userDepartmentInfo.getOrgId())
                               || StringUtils.isBlank(userDepartmentInfo.getOrgName())))
               .collect(Collectors.toList());
+      // 收集需要同步用户
       List<UserDepartmentInfo> syncList =
-          userDepartmentInfos.stream()
+          departSyncList.stream()
               .filter(
                   userDepartmentInfo ->
                       StringUtils.isNotBlank(userDepartmentInfo.getUserName())
@@ -94,9 +97,26 @@ public class UserDepartmentInfoSync {
         }
       }
       if (!CollectionUtils.isEmpty(syncList)) {
-        // 删除org_user数据，再同步
-        userDepartmentInfoMapper.deleteUser();
-        userDepartmentInfoMapper.batchInsertUsers(syncList);
+        // userDepartmentInfos每次处理5000条
+        List<List<UserDepartmentInfo>> syncLists = Lists.partition(syncList, pagesize);
+        syncLists.forEach(
+            list -> {
+              list.forEach(
+                  departSyncInfo -> {
+                    UserDepartmentInfo userDepartmentInfo =
+                        userDepartmentInfoMapper.selectUser(departSyncInfo.getUserName());
+                    if (null == userDepartmentInfo) {
+                      userDepartmentInfoMapper.insertUser(departSyncInfo);
+                    } else {
+                      if ((!departSyncInfo.getOrgId().equals(userDepartmentInfo.getOrgId()))
+                          || (!departSyncInfo
+                              .getOrgName()
+                              .equals(userDepartmentInfo.getOrgName()))) {
+                        userDepartmentInfoMapper.updateUser(departSyncInfo);
+                      }
+                    }
+                  });
+            });
       }
     }
   }
