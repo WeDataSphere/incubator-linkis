@@ -1428,6 +1428,7 @@ public class UDFRestfulApi {
         if (is != null) {
           IOUtils.closeQuietly(is);
         }
+        fileSystem.close();
       }
     }
     // 返回成功消息并包含文件地址

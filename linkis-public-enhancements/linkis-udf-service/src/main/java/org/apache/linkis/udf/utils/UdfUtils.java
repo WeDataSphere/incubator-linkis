@@ -162,6 +162,8 @@ public class UdfUtils {
   }
 
   public static Boolean checkModuleIsExistEnv(String module) {
+    // 获取整个pip list
+//    String piplist = Utils.exec((new String[] {"pip list"}));
     String exec =
         Utils.exec(
             (new String[] {
