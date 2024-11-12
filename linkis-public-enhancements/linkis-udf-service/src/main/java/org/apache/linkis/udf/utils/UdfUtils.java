@@ -184,7 +184,9 @@ public class UdfUtils {
       String exec =
           Utils.exec(
               (new String[] {
-                "python3", Configuration.getLinkisHome() + "/admin/" + "check_modules.py", module
+                Constants.PYTHON_COMMAND.getValue(),
+                Configuration.getLinkisHome() + "/admin/" + "check_modules.py",
+                module
               }));
       return Boolean.parseBoolean(exec);
     } catch (Exception e) {
