@@ -31,4 +31,6 @@ public class Constants {
 
   public static final CommonVars<String> PYTHON_COMMAND =
       CommonVars.apply("linkis.execution.command.python.version", "python3");
+  public static final CommonVars<String> PYTHON_PATH =
+      CommonVars.apply("linkis.python3.path", "/appcom/Install/anaconda3/bin/python");
 }
