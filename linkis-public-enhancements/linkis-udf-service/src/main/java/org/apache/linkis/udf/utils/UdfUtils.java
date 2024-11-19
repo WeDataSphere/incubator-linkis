@@ -92,24 +92,25 @@ public class UdfUtils {
    * @throws IOException 如果文件读取失败。
    */
   private static String getRootPath(InputStream inputStream, String folder) throws IOException {
+    String rootPathStr = "";
     try (TarArchiveInputStream tarInput =
         new TarArchiveInputStream(new GzipCompressorInputStream(inputStream))) {
       TarArchiveEntry entry;
+      String delimiter = FsPath.SEPARATOR + folder + FsPath.SEPARATOR;
       while ((entry = tarInput.getNextTarEntry()) != null) {
-        if (entry.isDirectory()
-            && entry.getName().endsWith(FsPath.SEPARATOR + folder + FsPath.SEPARATOR)) {
-          return entry.getName().replace(folder + FsPath.SEPARATOR, "");
+        if (entry.isDirectory() && entry.getName().endsWith(delimiter)) {
+          rootPathStr = entry.getName().replace(folder + FsPath.SEPARATOR, "");
+          return  rootPathStr;
         }
-        if (entry.getName().contains(FsPath.SEPARATOR + folder + FsPath.SEPARATOR)) {
-          String delimiter = FsPath.SEPARATOR + folder + FsPath.SEPARATOR;
-          int delimiterIndex = entry.getName().indexOf(delimiter);
-          return entry.getName().substring(0, delimiterIndex);
+        if (entry.getName().contains(delimiter)) {
+          rootPathStr = entry.getName().substring(0, entry.getName().indexOf(delimiter));
+          return  rootPathStr;
         }
       }
     } catch (Exception e) {
       throw new UdfException(80039, "File upload failed, error message:", e);
     }
-    return null;
+    return rootPathStr;
   }
 
   /**
@@ -153,20 +154,21 @@ public class UdfUtils {
   public static InputStream getZipInputStreamByTarInputStream(
       MultipartFile file, String packageName) throws IOException {
     String rootPath = getRootPath(file.getInputStream(), packageName);
-    if (StringUtils.isBlank(rootPath)) {
+    if (StringUtils.isNotBlank(packageName) && StringUtils.isNotBlank(rootPath)) {
+      return createZipFile(file.getInputStream(), packageName, rootPath);
+    } else {
       throw new UdfException(
-          80038,
-          "The name directory "
-              + packageName
-              + " specified by PKG-INFO does not exist. Please confirm that the "
-              + packageName
-              + " specified by PKG-INFO in the package matches the actual folder name (PKG-INFO指定Name目录"
-              + packageName
-              + "不存在，请确认包中PKG-INFO指定"
-              + packageName
-              + "和实际文件夹名称一致)");
+              80038,
+              "The name directory "
+                      + packageName
+                      + " specified by PKG-INFO does not exist. Please confirm that the "
+                      + packageName
+                      + " specified by PKG-INFO in the package matches the actual folder name (PKG-INFO指定Name目录"
+                      + packageName
+                      + "不存在，请确认包中PKG-INFO指定"
+                      + packageName
+                      + "和实际文件夹名称一致)");
     }
-    return createZipFile(file.getInputStream(), packageName, rootPath);
   }
 
   public static Boolean checkModuleIsExistEnv(String module) {
@@ -184,6 +186,9 @@ public class UdfUtils {
       logger.info("get pip3 list error", e);
     }
     try {
+      if (module == null || !module.matches("^[a-zA-Z][a-zA-Z0-9_.-]{0,49}$")) {
+        throw new IllegalArgumentException("Invalid module name: " + module);
+      }
       String exec =
           Utils.exec(
               (new String[] {
