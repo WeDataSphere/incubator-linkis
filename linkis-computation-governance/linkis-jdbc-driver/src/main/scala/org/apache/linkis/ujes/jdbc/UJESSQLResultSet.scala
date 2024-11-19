@@ -204,12 +204,6 @@ class UJESSQLResultSet(
       resultSetResult.getFileContent.asInstanceOf[util.ArrayList[util.ArrayList[String]]]
   }
 
-  def getResultSet(): util.ArrayList[util.ArrayList[String]] = {
-    resultSetResultInit()
-    resultSetInit()
-    resultSetRow
-  }
-
   private def init(): Unit = {
     resultSetResultInit()
     metaDataInit()
