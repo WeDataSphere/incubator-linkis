@@ -243,7 +243,7 @@ class HiveEngineConcurrentConnExecutor(
                 )
                 val queueName = hiveConf.get(HiveEngineConfiguration.HIVE_QUEUE_NAME)
                 engineExecutorContext.appendStdout(
-                  s"Your task will be submitted to $queueName queue"
+                  s"Your task will be submitted to the $queueName queue"
                 )
               }
 
