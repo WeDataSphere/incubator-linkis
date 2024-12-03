@@ -72,7 +72,11 @@ class YarnResourceRequester extends ExternalResourceRequester with Logging {
   ): NodeResource = {
     val rmWebAddress = getAndUpdateActiveRmWebAddress(provider)
     logger.info(s"rmWebAddress: $rmWebAddress")
-    val queueName = identifier.asInstanceOf[YarnResourceIdentifier].getQueueName
+    var queueName = identifier.asInstanceOf[YarnResourceIdentifier].getQueueName
+    if (queueName.startsWith("root.")) {
+      logger.info(s"Queue name [$queueName] starts with 'root.', remove 'root.'")
+      queueName = queueName.substring("root.".length)
+    }
 
     def getYarnResource(jValue: Option[JValue]) = jValue.map(r =>
       new YarnResource(
