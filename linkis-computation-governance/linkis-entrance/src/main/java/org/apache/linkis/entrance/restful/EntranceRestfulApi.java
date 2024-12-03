@@ -516,11 +516,6 @@ public class EntranceRestfulApi implements EntranceRestfulRemote {
     JsonNode idNode = jsonNode.get("idList");
     JsonNode taskIDNode = jsonNode.get("taskIDList");
     ArrayList<Long> waitToForceKill = new ArrayList<>();
-    JsonNode killReasonNode = jsonNode.get("killReason");
-    String killReason = "";
-    if (killReasonNode != null) {
-      killReason = killReasonNode.asText();
-    }
     String userName = ModuleUserUtils.getOperationUser(req, "killJobs");
 
     if (idNode.size() != taskIDNode.size()) {
@@ -558,7 +553,7 @@ public class EntranceRestfulApi implements EntranceRestfulRemote {
         messages.add(message);
       } else {
         try {
-          logger.info("begin to kill job {}, kill reason is {} ", job.get().getId(), killReason);
+          logger.info("begin to kill job {} ", job.get().getId());
 
           if (job.get() instanceof EntranceJob) {
             EntranceJob entranceJob = (EntranceJob) job.get();
@@ -590,9 +585,6 @@ public class EntranceRestfulApi implements EntranceRestfulRemote {
                       + " was kill by user successfully(任务"
                       + jobReq.getId()
                       + "已成功取消)");
-            }
-            if (StringUtils.isNotBlank(killReason)) {
-              jobReq.setErrorDesc(jobReq.getErrorDesc() + "Kill reason is " + killReason);
             }
             this.entranceServer
                 .getEntranceContext()
@@ -628,8 +620,7 @@ public class EntranceRestfulApi implements EntranceRestfulRemote {
   public Message kill(
       HttpServletRequest req,
       @PathVariable("id") String id,
-      @RequestParam(value = "taskID", required = false) Long taskID,
-      @RequestParam(value = "killReason", required = false) String killReason) {
+      @RequestParam(value = "taskID", required = false) Long taskID) {
     String realId = ZuulEntranceUtils.parseExecID(id)[3];
     String userName = ModuleUserUtils.getOperationUser(req, "kill task realId:" + realId);
 
@@ -668,7 +659,7 @@ public class EntranceRestfulApi implements EntranceRestfulRemote {
           }
         }
 
-        logger.info("begin to kill job {}, kill reason is {} ", job.get().getId(), killReason);
+        logger.info("begin to kill job {} ", job.get().getId());
         job.get().kill();
         message = Message.ok("Successfully killed the job(成功kill了job)");
         message.setMethod("/api/entrance/" + id + "/kill");
@@ -679,9 +670,6 @@ public class EntranceRestfulApi implements EntranceRestfulRemote {
           EntranceJob entranceJob = (EntranceJob) job.get();
           JobRequest jobReq = entranceJob.getJobRequest();
           entranceJob.updateJobRequestStatus(SchedulerEventState.Cancelled().toString());
-          if (StringUtils.isNotBlank(killReason)) {
-            jobReq.setErrorDesc(jobReq.getErrorDesc() + "Kill reason is " + killReason);
-          }
           this.entranceServer
               .getEntranceContext()
               .getOrCreatePersistenceManager()
