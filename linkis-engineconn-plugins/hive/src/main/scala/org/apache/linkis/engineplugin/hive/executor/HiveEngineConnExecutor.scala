@@ -192,7 +192,7 @@ class HiveEngineConnExecutor(
     this.proc = proc
     LOG.debug("ugi is " + ugi.getUserName)
     Utils.tryFinally {
-      ugi.doAs(new PrivilegedExceptionAction[ExecuteResponse]() {
+      val resp: ExecuteResponse = ugi.doAs(new PrivilegedExceptionAction[ExecuteResponse]() {
         override def run(): ExecuteResponse = {
           proc match {
             case any if HiveDriverProxy.isDriver(any) =>
@@ -222,7 +222,10 @@ class HiveEngineConnExecutor(
           }
         }
       })
+      logger.info(s"HiveEngineConnExecutor response is: ${resp}")
+      resp
     } {
+      logger.info(s"HiveEngineConnExecutor task final execute.")
       if (this.driver != null) {
         Utils.tryQuietly {
           driver.close()

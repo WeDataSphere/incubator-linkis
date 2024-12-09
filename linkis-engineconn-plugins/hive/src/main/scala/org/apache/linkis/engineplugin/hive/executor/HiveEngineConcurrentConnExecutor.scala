@@ -70,10 +70,12 @@ import org.apache.hadoop.security.UserGroupInformation
 
 import java.io.ByteArrayOutputStream
 import java.security.PrivilegedExceptionAction
+import java.time.Duration
 import java.util
 import java.util.concurrent.{
   Callable,
   ConcurrentHashMap,
+  Future,
   LinkedBlockingQueue,
   ThreadPoolExecutor,
   TimeUnit
@@ -82,6 +84,7 @@ import java.util.concurrent.{
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.Await
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import org.slf4j.LoggerFactory
@@ -135,7 +138,11 @@ class HiveEngineConcurrentConnExecutor(
       code: String
   ): ExecuteResponse = {
     LOG.info(s"HiveEngineConcurrentConnExecutor Ready to executeLine: $code")
-    val taskId: String = engineExecutorContext.getJobId.get
+    val jobIdOpt: Option[String] = engineExecutorContext.getJobId
+    var taskId: String = null
+    jobIdOpt.foreach(jid => {
+      taskId = jid
+    })
     CSHiveHelper.setContextIDInfoToHiveConf(engineExecutorContext, hiveConf)
 
     val realCode = code.trim()
@@ -158,40 +165,50 @@ class HiveEngineConcurrentConnExecutor(
 
         val proc = CommandProcessorFactory.get(tokens, hiveConf)
         LOG.debug("ugi is " + ugi.getUserName)
-        ugi.doAs(new PrivilegedExceptionAction[ExecuteResponse]() {
-          override def run(): ExecuteResponse = {
-            proc match {
-              case any if HiveDriverProxy.isDriver(any) =>
-                logger.info(s"driver is $any")
+        Utils.tryFinally {
+          val resp: ExecuteResponse = ugi.doAs(new PrivilegedExceptionAction[ExecuteResponse]() {
+            override def run(): ExecuteResponse = {
+              proc match {
+                case any if HiveDriverProxy.isDriver(any) =>
+                  logger.info(s"driver is $any")
 
-                val driver = new HiveDriverProxy(any)
-                driverCache.put(taskId, driver)
-                executeHQL(
-                  engineExecutorContext.getJobId.get,
-                  engineExecutorContext,
-                  realCode,
-                  driver
-                )
-              case _ =>
-                val resp = proc.run(realCode.substring(tokens(0).length).trim)
-                val result = new String(baos.toByteArray)
-                logger.info("RESULT => {}", result)
-                engineExecutorContext.appendStdout(result)
-                baos.reset()
-                if (resp.getResponseCode != 0) {
+                  val driver = new HiveDriverProxy(any)
+                  if (StringUtils.isNotBlank(taskId)) {
+                    driverCache.put(taskId, driver)
+                  }
+                  executeHQL(
+                    engineExecutorContext.getJobId.get,
+                    engineExecutorContext,
+                    realCode,
+                    driver
+                  )
+                case _ =>
+                  val resp = proc.run(realCode.substring(tokens(0).length).trim)
+                  val result = new String(baos.toByteArray)
+                  logger.info("RESULT => {}", result)
+                  engineExecutorContext.appendStdout(result)
+                  baos.reset()
+                  if (resp.getResponseCode != 0) {
+                    onComplete()
+                    throw resp.getException
+                  }
                   onComplete()
-                  throw resp.getException
-                }
-                onComplete()
-                SuccessExecuteResponse()
+                  SuccessExecuteResponse()
+              }
             }
-          }
-        })
+          })
+          logger.info(s"HiveEngineConcurrentConnExecutor response is: ${resp}")
+          resp
+        } {
+          logger.info(s"HiveEngineConcurrentConnExecutor task final execute.")
+        }
       }
     }
-
-    val future = backgroundOperationPool.submit(operation)
-    future.get()
+    Utils.tryAndWarn {
+      val future: Future[ExecuteResponse] = backgroundOperationPool.submit(operation)
+      logger.info(s"${future} and status ${future.isDone}")
+      future.get()
+    }
   }
 
   def logMemoryCache(): Unit = {
