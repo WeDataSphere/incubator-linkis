@@ -57,6 +57,8 @@ class YarnResourceRequester extends ExternalResourceRequester with Logging {
 
   private val HASTATE_ACTIVE = "active"
 
+  private val QUEUE_PREFIX = "root."
+
   private val rmAddressMap: util.Map[String, String] = new ConcurrentHashMap[String, String]()
 
   private def getAuthorizationStr(provider: ExternalResourceProvider) = {
@@ -73,9 +75,9 @@ class YarnResourceRequester extends ExternalResourceRequester with Logging {
     val rmWebAddress = getAndUpdateActiveRmWebAddress(provider)
     logger.info(s"rmWebAddress: $rmWebAddress")
     var queueName = identifier.asInstanceOf[YarnResourceIdentifier].getQueueName
-    if (queueName.startsWith("root.")) {
-      logger.info(s"Queue name [$queueName] starts with 'root.', remove 'root.'")
-      queueName = queueName.substring("root.".length)
+    if (queueName.startsWith(QUEUE_PREFIX)) {
+      logger.info(s"Queue name [$queueName] starts with '[$QUEUE_PREFIX]', remove '[$QUEUE_PREFIX]]'")
+      queueName = queueName.substring(QUEUE_PREFIX.length)
     }
 
     def getYarnResource(jValue: Option[JValue]) = jValue.map(r =>
