@@ -176,7 +176,7 @@ class UJESSQLResultSet(
       return
     }
     val metaTmp = resultSetResult.getMetadata
-    if ("NULL" == metaTmp) {
+    if ("NULL".equals(String.valueOf(metaTmp))) {
       val fileContentList = resultSetResult.getFileContent.asInstanceOf[util.List[util.List[String]]]
       if (null != fileContentList) {
         resultSetMetaData.setColumnNameProperties(1, "linkis_string")
