@@ -18,6 +18,7 @@
 package org.apache.linkis.manager.rm.external.yarn
 
 import org.apache.linkis.common.utils.{Logging, Utils}
+import org.apache.linkis.engineplugin.server.conf.EngineConnPluginConfiguration
 import org.apache.linkis.manager.common.conf.RMConfiguration
 import org.apache.linkis.manager.common.entity.resource.{
   CommonNodeResource,
@@ -57,6 +58,8 @@ class YarnResourceRequester extends ExternalResourceRequester with Logging {
 
   private val HASTATE_ACTIVE = "active"
 
+  private val queuePrefix = EngineConnPluginConfiguration.QUEUE_PREFIX.getValue
+
   private val rmAddressMap: util.Map[String, String] = new ConcurrentHashMap[String, String]()
 
   private def getAuthorizationStr(provider: ExternalResourceProvider) = {
@@ -72,7 +75,11 @@ class YarnResourceRequester extends ExternalResourceRequester with Logging {
   ): NodeResource = {
     val rmWebAddress = getAndUpdateActiveRmWebAddress(provider)
     logger.info(s"rmWebAddress: $rmWebAddress")
-    val queueName = identifier.asInstanceOf[YarnResourceIdentifier].getQueueName
+    var queueName = identifier.asInstanceOf[YarnResourceIdentifier].getQueueName
+    if (queueName.startsWith(queuePrefix)) {
+      logger.info(s"Queue name [$queueName] starts with '[$queuePrefix]', remove '[$queuePrefix]]'")
+      queueName = queueName.substring(queuePrefix.length)
+    }
 
     def getYarnResource(jValue: Option[JValue]) = jValue.map(r =>
       new YarnResource(
@@ -110,7 +117,7 @@ class YarnResourceRequester extends ExternalResourceRequester with Logging {
       })
     }
 
-    var realQueueName = "root." + queueName
+    var realQueueName = queuePrefix + queueName
 
     def getQueue(queues: JValue): Option[JValue] = queues match {
       case JArray(queue) =>
@@ -280,7 +287,7 @@ class YarnResourceRequester extends ExternalResourceRequester with Logging {
       )
     )
 
-    val realQueueName = "root." + queueName
+    val realQueueName = queuePrefix + queueName
 
     def getAppInfos(): Array[ExternalAppInfo] = {
       val resp = getResponseByUrl("apps", rmWebAddress, provider)
