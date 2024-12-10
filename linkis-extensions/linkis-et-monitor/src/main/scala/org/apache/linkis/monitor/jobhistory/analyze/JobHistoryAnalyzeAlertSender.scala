@@ -28,13 +28,7 @@ import java.util
 
 import scala.collection.JavaConverters._
 
-/**
- * Scan the execution data within the first 20 minutes, judge the completed tasks,
- *   1. The parm field in jobhistory contains (task.notification.conditions) 2. If the result of
- *      executing the task is any one of (Succeed, Failed, Canceled, Timeout, ALL), an alarm will be
- *      triggered 3.The result of the job is that it has ended The alarm can be triggered if the
- *      above three conditions are met at the same time
- */
+
 class JobHistoryAnalyzeAlertSender() extends Observer with Logging {
   override def update(e: Event, jobHistroyList: scala.Any): Unit = {}
 
