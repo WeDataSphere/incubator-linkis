@@ -737,7 +737,7 @@ public class EngineRestfulApi {
 
   @ApiOperation(
       value = "kill egineconns of a ecm",
-      notes = "Kill engine after updating configuration",
+      notes = "Kill engine by cteator or engineType",
       response = Message.class)
   @ApiImplicitParams({
     @ApiImplicitParam(name = "creator", dataType = "String", required = true, example = "IDE"),
@@ -748,7 +748,7 @@ public class EngineRestfulApi {
         example = "hive-2.3.3"),
   })
   @ApiOperationSupport(ignoreParameters = {"param"})
-  @RequestMapping(path = "/rm/killEngineByUpdateConfig", method = RequestMethod.POST)
+  @RequestMapping(path = "/rm/killEngineByCreatorEngineType", method = RequestMethod.POST)
   public Message killEngineByUpdateConfig(HttpServletRequest req, @RequestBody JsonNode jsonNode)
       throws AMErrorException {
     String userName = ModuleUserUtils.getOperationUser(req);
@@ -770,48 +770,18 @@ public class EngineRestfulApi {
         && AMConfiguration.isUnAllowKilledEngineType(engineType)) {
       return Message.error("multi user engine does not support this feature(多用户引擎不支持此功能)");
     }
-    engineStopService.stopUnlockECByUserCreatorAndECType(userName, creatorStr, engineType);
-    return Message.ok("Kill engineConn succeed");
-  }
-
-  @ApiOperation(
-      value = "kill egineconns of a ecm",
-      notes = "Kill engine after updating UDF",
-      response = Message.class)
-  @ApiImplicitParams({
-    @ApiImplicitParam(name = "engineType", dataType = "String", required = true, example = "hive"),
-  })
-  @ApiOperationSupport(ignoreParameters = {"param"})
-  @RequestMapping(path = "/rm/killEngineByUdf", method = RequestMethod.POST)
-  public Message killEngineByUdf(HttpServletRequest req, @RequestBody JsonNode jsonNode)
-      throws AMErrorException {
-    String userName = ModuleUserUtils.getOperationUser(req);
-    String jvmUser = StorageUtils.getJvmUser();
-    if (jvmUser.equals(userName)) {
-      return Message.error(
-          jvmUser + " users do not support this feature (" + jvmUser + " 用户不支持此功能)");
-    }
-    String engineType = "";
-    if (null != jsonNode.get("engineType")) {
-      engineType = jsonNode.get("engineType").textValue();
-    }
-    if (StringUtils.isNotBlank(engineType)
-        && AMConfiguration.isUnAllowKilledEngineType(engineType)) {
-      return Message.error("multi user engine does not support this feature(多用户引擎不支持此功能)");
-    }
     if (engineType.equals(Configuration.GLOBAL_CONF_SYMBOL())) {
       Arrays.stream(AMConfiguration.UDF_KILL_ENGINE_TYPE().split(","))
-          .forEach(
-              engine ->
-                  engineStopService.stopUnlockECByUserCreatorAndECType(
-                      userName, Configuration.GLOBAL_CONF_SYMBOL(), engine));
+              .forEach(
+                      engine ->
+                              engineStopService.stopUnlockECByUserCreatorAndECType(
+                                      userName, creatorStr, engine));
     } else {
       engineStopService.stopUnlockECByUserCreatorAndECType(
-          userName, Configuration.GLOBAL_CONF_SYMBOL(), engineType);
+              userName, creatorStr, engineType);
     }
     return Message.ok("Kill engineConn succeed");
   }
-
   static ServiceInstance getServiceInstance(JsonNode jsonNode) throws AMErrorException {
     String applicationName = jsonNode.get("applicationName").asText();
     String instance = jsonNode.get("instance").asText();
