@@ -32,9 +32,13 @@ trait SchedulerEvent extends Logging {
   protected var scheduledTime: Long = 0L
   protected var startTime: Long = 0L
   protected var endTime: Long = 0L
+  protected var priority: Int = 100
+  protected var timestamp: Int = 0
 
   def getEndTime: Long = endTime
   def getStartTime: Long = startTime
+  def getPriority: Int = priority
+  def getTimestamp: Int = timestamp
 
   /*
    * To be compatible with old versions.
@@ -48,6 +52,14 @@ trait SchedulerEvent extends Logging {
   def setId(id: String): Unit = {
     this.id = id
     this synchronized notify()
+  }
+
+  def setPriority(priority: Int): Unit = {
+    this.priority = priority
+  }
+
+  def setTimestamp(timestamp: Int): Unit = {
+    this.timestamp = timestamp
   }
 
   def turnToScheduled(): Boolean = if (!isWaiting) {

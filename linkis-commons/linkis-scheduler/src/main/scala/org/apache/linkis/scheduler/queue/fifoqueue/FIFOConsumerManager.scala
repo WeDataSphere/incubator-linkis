@@ -19,10 +19,11 @@ package org.apache.linkis.scheduler.queue.fifoqueue
 
 import org.apache.linkis.common.utils.Utils
 import org.apache.linkis.scheduler.SchedulerContext
+import org.apache.linkis.scheduler.conf.SchedulerConfiguration.FIFO_QUEUE_STRATEGY
 import org.apache.linkis.scheduler.errorcode.LinkisSchedulerErrorCodeSummary._
 import org.apache.linkis.scheduler.exception.SchedulerErrorException
 import org.apache.linkis.scheduler.listener.ConsumerListener
-import org.apache.linkis.scheduler.queue.{Consumer, ConsumerManager, Group, LoopArrayQueue}
+import org.apache.linkis.scheduler.queue._
 
 import java.text.MessageFormat
 import java.util.concurrent.{ExecutorService, ThreadPoolExecutor}
@@ -34,7 +35,7 @@ class FIFOConsumerManager(groupName: String) extends ConsumerManager {
   private var group: Group = _
   private var executorService: ThreadPoolExecutor = _
   private var consumerListener: ConsumerListener = _
-  private var consumerQueue: LoopArrayQueue = _
+  private var consumerQueue: ConsumeQueue = _
   private var consumer: Consumer = _
 
   override def setSchedulerContext(schedulerContext: SchedulerContext): Unit = {
@@ -49,9 +50,17 @@ class FIFOConsumerManager(groupName: String) extends ConsumerManager {
           MessageFormat.format(NEED_SUPPORTED_GROUP.getErrorDesc, group.getClass)
         )
     }
-    consumerQueue = new LoopArrayQueue(
-      getSchedulerContext.getOrCreateGroupFactory.getOrCreateGroup(null)
-    )
+    val fifoQueueStrategy: String = FIFO_QUEUE_STRATEGY.toLowerCase()
+    consumerQueue = fifoQueueStrategy match {
+      case "pfifo" =>
+        new PriorityLoopArrayQueue(
+          getSchedulerContext.getOrCreateGroupFactory.getOrCreateGroup(null)
+        )
+      case _ =>
+        new LoopArrayQueue(
+          getSchedulerContext.getOrCreateGroupFactory.getOrCreateGroup(null)
+        )
+    }
     consumer = createConsumer(groupName)
   }
 
