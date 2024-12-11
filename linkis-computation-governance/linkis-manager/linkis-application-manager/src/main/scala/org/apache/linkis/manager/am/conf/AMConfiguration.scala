@@ -154,6 +154,8 @@ object AMConfiguration {
 
   val AM_USER_RESET_RESOURCE = CommonVars("linkis.am.user.reset.resource.enable", true).getValue
 
+  val UDF_KILL_ENGINE_TYPE = CommonVars("linkis.udf.kill.engine.type", "spark,hive").getValue
+
   private def getDefaultMultiEngineUser(): String = {
     val jvmUser = Utils.getJvmUser
     s""" {jdbc:"$jvmUser", es: "$jvmUser", presto:"$jvmUser", appconn:"$jvmUser", openlookeng:"$jvmUser", trino:"$jvmUser", io_file:"root", jobserver:"$jvmUser", nebula:"$jvmUser"}"""
