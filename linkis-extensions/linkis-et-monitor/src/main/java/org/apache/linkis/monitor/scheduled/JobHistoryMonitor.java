@@ -215,7 +215,7 @@ public class JobHistoryMonitor {
     JobMonitorUtils.run(scanner, fetchers, shouldStart);
   }
 
-  /** * 扫描两个小时之内的任务，告警要求：管理台配置告警相关参数 */
+  /** * 每10分钟扫描一次,扫描两个小时之内的任务，告警要求：管理台配置告警相关参数 */
   @Scheduled(cron = "${linkis.monitor.jdbc.timeout.alert.cron:0 0/10 0 * * ?}")
   public void jdbcUnfinishedAlertScan() {
     long id =
@@ -238,7 +238,7 @@ public class JobHistoryMonitor {
     JobMonitorUtils.run(scanner, fetchers, true);
   }
 
-  /** * 扫描两个小时之内的任务，满足要求触发kill kill要求：数据源配置kill参数 */
+  /** * 每10分钟扫描一次,扫描两个小时之内的任务，满足要求触发kill kill要求：数据源配置kill参数 */
   @Scheduled(cron = "${linkis.monitor.jdbc.timeout.kill.cron:0 0/10 0 * * ?}")
   public void jdbcUnfinishedKillScan() {
     long id =
