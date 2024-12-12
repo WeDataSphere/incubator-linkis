@@ -17,11 +17,10 @@
 
 package org.apache.linkis.manager.label.exception;
 
-import org.apache.linkis.common.exception.ExceptionLevel;
-import org.apache.linkis.common.exception.LinkisRuntimeException;
+import org.apache.linkis.common.exception.ErrorException;
 
 /** Define Exception */
-public class LabelErrorException extends LinkisRuntimeException {
+public class LabelErrorException extends ErrorException {
   public LabelErrorException(int errCode, String desc) {
     super(errCode, desc);
   }
@@ -29,10 +28,5 @@ public class LabelErrorException extends LinkisRuntimeException {
   public LabelErrorException(int errCode, String desc, Throwable t) {
     super(errCode, desc);
     this.initCause(t);
-  }
-
-  @Override
-  public ExceptionLevel getLevel() {
-    return ExceptionLevel.ERROR;
   }
 }

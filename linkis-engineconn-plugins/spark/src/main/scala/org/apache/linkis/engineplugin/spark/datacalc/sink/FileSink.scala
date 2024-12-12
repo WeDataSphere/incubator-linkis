@@ -48,7 +48,6 @@ class FileSink extends DataCalcSink[FileSinkConfig] with Logging {
       case "parquet" => writer.parquet(path)
       case "text" => writer.text(path)
       case "orc" => writer.orc(path)
-      case "excel" => writer.format("excel").save(path)
       case _ => writer.format(config.getSerializer).save(path)
     }
   }

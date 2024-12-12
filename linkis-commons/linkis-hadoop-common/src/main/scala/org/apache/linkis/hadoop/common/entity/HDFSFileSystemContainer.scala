@@ -21,7 +21,7 @@ import org.apache.linkis.hadoop.common.conf.HadoopConf
 
 import org.apache.hadoop.fs.FileSystem
 
-class HDFSFileSystemContainer(fs: FileSystem, user: String, label: String) {
+class HDFSFileSystemContainer(fs: FileSystem, user: String) {
 
   private var lastAccessTime: Long = System.currentTimeMillis()
 
@@ -30,8 +30,6 @@ class HDFSFileSystemContainer(fs: FileSystem, user: String, label: String) {
   def getFileSystem: FileSystem = this.fs
 
   def getUser: String = this.user
-
-  def getLabel: String = this.label
 
   def getLastAccessTime: Long = this.lastAccessTime
 

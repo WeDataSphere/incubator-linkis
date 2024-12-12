@@ -26,8 +26,3 @@ case class RequestPythonModuleProtocol(userName: String, engineType: String)
     with CacheableProtocol
     with PythonModuleProtocol
     with UdfProtocol
-
-case class RequestPythonInfo(pythonModule: String, username: String)
-    extends RetryableProtocol
-    with CacheableProtocol
-    with UdfProtocol

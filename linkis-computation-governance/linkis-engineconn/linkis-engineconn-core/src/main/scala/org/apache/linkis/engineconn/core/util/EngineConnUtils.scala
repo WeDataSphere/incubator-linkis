@@ -17,14 +17,10 @@
 
 package org.apache.linkis.engineconn.core.util
 
-import com.google.gson.{GsonBuilder, ToNumberPolicy}
+import com.google.gson.Gson
 
 object EngineConnUtils {
 
-  val GSON = new GsonBuilder()
-    .setDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-    .serializeNulls
-    .setObjectToNumberStrategy(ToNumberPolicy.LAZILY_PARSED_NUMBER)
-    .create
+  val GSON = new Gson()
 
 }

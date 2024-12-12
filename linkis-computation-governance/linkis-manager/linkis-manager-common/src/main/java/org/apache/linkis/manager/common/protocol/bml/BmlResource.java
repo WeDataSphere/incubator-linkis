@@ -80,4 +80,13 @@ public class BmlResource implements Serializable {
     Private,
     Label
   }
+
+  /*    @Override
+  public String toString() {
+      return "{" +
+              "fileName='" + fileName + '\'' +
+              ", resourceId='" + resourceId + '\'' +
+              ", version='" + version + '\'' +
+              '}';
+  }*/
 }

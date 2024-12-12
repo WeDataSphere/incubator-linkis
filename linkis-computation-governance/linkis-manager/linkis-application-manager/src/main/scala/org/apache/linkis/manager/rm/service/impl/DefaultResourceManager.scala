@@ -160,21 +160,21 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
       registerResourceFlag = false
       logger.warn(s"${serviceInstance} has been registered, resource is ${emResource}.")
       val leftResource = emResource.getLeftResource
-      if (leftResource != null && Resource.getZeroResource(leftResource).moreThan(leftResource)) {
+      if (leftResource != null && Resource.getZeroResource(leftResource) > leftResource) {
         logger.warn(
           s"${serviceInstance} has been registered, but left Resource <0 need to register resource."
         )
         registerResourceFlag = true
       }
-      val usedResource = emResource.getLockedResource.add(emResource.getUsedResource)
-      if (usedResource.moreThan(emResource.getMaxResource)) {
+      val usedResource = emResource.getLockedResource + emResource.getUsedResource
+      if (usedResource > emResource.getMaxResource) {
         logger.warn(
           s"${serviceInstance} has been registered, but usedResource > MaxResource  need to register resource."
         )
         registerResourceFlag = true
       }
 
-      if (!(resource.getMaxResource.equalsTo(emResource.getMaxResource))) {
+      if (!(resource.getMaxResource == emResource.getMaxResource)) {
         logger.warn(
           s"${serviceInstance} has been registered, but inconsistent newly registered resources  need to register resource."
         )
@@ -277,7 +277,7 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
     val resourceLabels = labelContainer.getResourceLabels.asScala
     val persistenceLocks = new ArrayBuffer[PersistenceLock]()
     val emInstanceLabel = labelContainer.getEMInstanceLabel
-    val userCreatorEngineTypeLabel = labelContainer.getCombinedResourceLabel
+    val userCreatorEngineTypeLabel = labelContainer.getCombinedUserCreatorEngineTypeLabel
 
     Utils.tryFinally {
       // check ecm resource if not enough return
@@ -323,16 +323,14 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
         labelContainer.setCurrentLabel(label)
         val labelResource = labelResourceService.getLabelResource(label)
         if (labelResource != null) {
-          labelResource.setLeftResource(
-            labelResource.getLeftResource.minus(resource.getLockedResource)
-          )
+          labelResource.setLeftResource(labelResource.getLeftResource - resource.getLockedResource)
           labelResource.setLockedResource(
-            labelResource.getLockedResource.add(resource.getLockedResource)
+            labelResource.getLockedResource + resource.getLockedResource
           )
           labelResourceService.setLabelResource(
             label,
             labelResource,
-            labelContainer.getCombinedResourceLabel.getStringValue
+            labelContainer.getCombinedUserCreatorEngineTypeLabel.getStringValue
           )
           logger.info(s"ResourceChanged:${label.getStringValue} --> ${labelResource}")
           resourceCheck(label, labelResource)
@@ -365,7 +363,7 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
     labelResourceService.setEngineConnLabelResource(
       engineInstanceLabel,
       resource,
-      labelContainer.getCombinedResourceLabel.getStringValue
+      labelContainer.getCombinedUserCreatorEngineTypeLabel.getStringValue
     )
     // record engine locked resource
     labelContainer.getLabels.add(engineInstanceLabel)
@@ -437,8 +435,8 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
       )
     }
     if (
-        lockedResource == null || !lockedResource.getLockedResource.moreThan(
-          Resource.initResource(lockedResource.getResourceType)
+        lockedResource == null || lockedResource.getLockedResource <= Resource.initResource(
+          lockedResource.getResourceType
         )
     ) {
       throw new RMErrorException(
@@ -450,7 +448,7 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
       s"resourceUsed ready:${labelContainer.getEMInstanceLabel.getServiceInstance}, used resource ${lockedResource.getLockedResource}"
     )
     val addedResource =
-      Resource.initResource(lockedResource.getResourceType).add(lockedResource.getLockedResource)
+      Resource.initResource(lockedResource.getResourceType) + lockedResource.getLockedResource
 
     val engineInstanceLabel: EngineInstanceLabel = labelContainer.getEngineInstanceLabel
     Utils.tryCatch {
@@ -460,7 +458,7 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
       labelResourceService.setLabelResource(
         engineInstanceLabel,
         lockedResource,
-        labelContainer.getCombinedResourceLabel.getStringValue
+        labelContainer.getCombinedUserCreatorEngineTypeLabel.getStringValue
       )
       resourceLogService.success(
         ChangeType.ENGINE_INIT,
@@ -484,15 +482,15 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
             labelContainer.setCurrentLabel(label)
             val labelResource = labelResourceService.getLabelResource(label)
             if (labelResource != null) {
-              labelResource.setLockedResource(labelResource.getLockedResource.minus(addedResource))
+              labelResource.setLockedResource(labelResource.getLockedResource - addedResource)
               if (null == labelResource.getUsedResource) {
                 labelResource.setUsedResource(Resource.initResource(labelResource.getResourceType))
               }
-              labelResource.setUsedResource(labelResource.getUsedResource.add(addedResource))
+              labelResource.setUsedResource(labelResource.getUsedResource + addedResource)
               labelResourceService.setLabelResource(
                 label,
                 labelResource,
-                labelContainer.getCombinedResourceLabel.getStringValue
+                labelContainer.getCombinedUserCreatorEngineTypeLabel.getStringValue
               )
               labelResourceSet.add(
                 new LabelResourceMapping(label, addedResource, ResourceOperationType.USED)
@@ -502,7 +500,11 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
           } {
             resourceLockService.unLock(persistenceLock)
           }
-          if (label.getClass.isAssignableFrom(labelContainer.getCombinedResourceLabel.getClass)) {
+          if (
+              label.getClass.isAssignableFrom(
+                labelContainer.getCombinedUserCreatorEngineTypeLabel.getClass
+              )
+          ) {
             resourceLogService.recordUserResourceAction(
               labelContainer,
               persistenceResource.getTicketId,
@@ -525,9 +527,9 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
     if (labelResource != null && label != null) {
       val resourceInit = Resource.initResource(labelResource.getResourceType)
       if (
-          !labelResource.getLockedResource.notLess(resourceInit) ||
-          !labelResource.getUsedResource.notLess(resourceInit) ||
-          !labelResource.getLeftResource.notLess(resourceInit)
+          labelResource.getLockedResource < resourceInit ||
+          labelResource.getUsedResource < resourceInit ||
+          labelResource.getLeftResource < resourceInit
       ) {
         logger.info(
           s"found error resource! resource label:${label.getStringValue}, resource:${labelResource}, please check!"
@@ -544,20 +546,20 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
       case driverAndYarnResource: DriverAndYarnResource =>
         nodeResource.getUsedResource match {
           case resource: DriverAndYarnResource =>
-            val newYarnResource = resource.getYarnResource
+            val newYarnResource = resource.yarnResource
             val applicationId: String = if (null != newYarnResource) {
-              newYarnResource.getApplicationId
+              newYarnResource.applicationId
             } else {
               null
             }
-            val oriYarnResource = driverAndYarnResource.getYarnResource
+            val oriYarnResource = driverAndYarnResource.yarnResource
             val tmpUsedResource = new DriverAndYarnResource(
-              driverAndYarnResource.getLoadInstanceResource,
+              driverAndYarnResource.loadInstanceResource,
               new YarnResource(
-                oriYarnResource.getQueueMemory,
-                oriYarnResource.getQueueCores,
-                oriYarnResource.getQueueInstances,
-                oriYarnResource.getQueueName,
+                oriYarnResource.queueMemory,
+                oriYarnResource.queueCores,
+                oriYarnResource.queueInstances,
+                oriYarnResource.queueName,
                 applicationId
               )
             )
@@ -568,11 +570,11 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
         nodeResource.getUsedResource match {
           case resource: YarnResource =>
             val tmpYarnResource = new YarnResource(
-              yarnResource.getQueueMemory,
-              yarnResource.getQueueCores,
-              yarnResource.getQueueInstances,
-              yarnResource.getQueueName,
-              resource.getApplicationId
+              yarnResource.queueMemory,
+              yarnResource.queueCores,
+              yarnResource.queueInstances,
+              yarnResource.queueName,
+              resource.applicationId
             )
             lockedResource.setUsedResource(tmpYarnResource)
           case _ =>
@@ -591,18 +593,16 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
         val resource = labelResourceService.getLabelResource(labelResourceMapping.getLabel())
         labelResourceMapping.getResourceOperationType match {
           case LOCK =>
-            resource.setLeftResource(
-              resource.getLeftResource.add(labelResourceMapping.getResource())
-            )
+            resource.setLeftResource(resource.getLeftResource + labelResourceMapping.getResource())
             resource.setLockedResource(
-              resource.getLockedResource.minus(labelResourceMapping.getResource())
+              resource.getLockedResource - labelResourceMapping.getResource()
             )
           case USED =>
             resource.setLockedResource(
-              resource.getLeftResource.add(labelResourceMapping.getResource())
+              resource.getLeftResource + labelResourceMapping.getResource()
             )
             resource.setUsedResource(
-              resource.getLockedResource.minus(labelResourceMapping.getResource())
+              resource.getLockedResource - labelResourceMapping.getResource()
             )
           case _ =>
         }
@@ -695,36 +695,31 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
               if (labelResource != null) {
                 if (label.isInstanceOf[EMInstanceLabel]) timeCheck(labelResource, usedResource)
                 if (
-                    null != usedResource.getUsedResource && usedResource.getUsedResource.moreThan(
-                      Resource
-                        .initResource(usedResource.getResourceType)
-                    )
+                    null != usedResource.getUsedResource && usedResource.getUsedResource > Resource
+                      .initResource(usedResource.getResourceType)
                 ) {
                   labelResource.setUsedResource(
-                    labelResource.getUsedResource.minus(usedResource.getUsedResource)
+                    labelResource.getUsedResource - usedResource.getUsedResource
                   )
                   labelResource.setLeftResource(
-                    labelResource.getLeftResource.add(usedResource.getUsedResource)
+                    labelResource.getLeftResource + usedResource.getUsedResource
                   )
                 }
                 if (
-                    null != usedResource.getLockedResource && usedResource.getLockedResource
-                      .moreThan(
-                        Resource
-                          .initResource(usedResource.getResourceType)
-                      )
+                    null != usedResource.getLockedResource && usedResource.getLockedResource != Resource
+                      .initResource(usedResource.getResourceType)
                 ) {
                   labelResource.setLockedResource(
-                    labelResource.getLockedResource.minus(usedResource.getLockedResource)
+                    labelResource.getLockedResource - usedResource.getLockedResource
                   )
                   labelResource.setLeftResource(
-                    labelResource.getLeftResource.add(usedResource.getLockedResource)
+                    labelResource.getLeftResource + usedResource.getLockedResource
                   )
                 }
                 labelResourceService.setLabelResource(
                   label,
                   labelResource,
-                  labelContainer.getCombinedResourceLabel.getStringValue
+                  labelContainer.getCombinedUserCreatorEngineTypeLabel.getStringValue
                 )
                 resourceCheck(label, labelResource)
               }
@@ -744,7 +739,11 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
                 heartbeatMsgMetrics = oldMetrics.getHeartBeatMsg
               }
             }
-            if (label.getClass.isAssignableFrom(labelContainer.getCombinedResourceLabel.getClass)) {
+            if (
+                label.getClass.isAssignableFrom(
+                  labelContainer.getCombinedUserCreatorEngineTypeLabel.getClass
+                )
+            ) {
               resourceLogService.recordUserResourceAction(
                 labelContainer,
                 persistenceResource.getTicketId,
@@ -829,7 +828,7 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
    */
 
   override def getResourceInfo(serviceInstances: Array[ServiceInstance]): ResourceInfo = {
-    val resourceInfo = ResourceInfo(Lists.newArrayList())
+    val resourceInfo = new ResourceInfo(Lists.newArrayList())
     serviceInstances.foreach({ serviceInstance =>
       val rmNode = new InfoRMNode
       var aggregatedResource: NodeResource = null
@@ -879,8 +878,8 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
       if (
           usedResource != null
           && usedResource.getLockedResource != null
-          && usedResource.getLockedResource.moreThan(
-            Resource.getZeroResource(usedResource.getLockedResource)
+          && usedResource.getLockedResource > Resource.getZeroResource(
+            usedResource.getLockedResource
           )
       ) {
         val dbEngineInstanceLabel = labelManagerPersistence.getLabel(persistenceEngineLabel.getId)
@@ -930,7 +929,7 @@ class DefaultResourceManager extends ResourceManager with Logging with Initializ
     // check resource with lock
     val requestResourceService = getRequestResourceService(resource.getResourceType)
     if (
-        labelContainer.getEMInstanceLabel == null || labelContainer.getCombinedResourceLabel == null
+        labelContainer.getEMInstanceLabel == null || labelContainer.getCombinedUserCreatorEngineTypeLabel == null
     ) {
       val canCreateECRes = new CanCreateECRes
       canCreateECRes.setCanCreateEC(false)

@@ -43,9 +43,4 @@ public class EngineInfoClearRequest implements EngineRequest {
   public String getUser() {
     return user;
   }
-
-  @Override
-  public String toString() {
-    return "EngineInfoClearRequest{" + "engineNode=" + engineNode + ", user='" + user + '\'' + '}';
-  }
 }

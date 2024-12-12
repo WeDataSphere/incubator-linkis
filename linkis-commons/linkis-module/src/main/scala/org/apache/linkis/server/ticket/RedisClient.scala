@@ -98,8 +98,8 @@ object RedisClient {
       maxIdle: Int,
       minIdle: Int,
       maxWaitMillis: Long
-  ): GenericObjectPoolConfig[Jedis] = {
-    val poolConfig = new GenericObjectPoolConfig[Jedis]()
+  ): GenericObjectPoolConfig[Nothing] = {
+    val poolConfig = new GenericObjectPoolConfig
     poolConfig.setMaxTotal(maxTotal)
     poolConfig.setMaxIdle(maxIdle)
     poolConfig.setMinIdle(minIdle)

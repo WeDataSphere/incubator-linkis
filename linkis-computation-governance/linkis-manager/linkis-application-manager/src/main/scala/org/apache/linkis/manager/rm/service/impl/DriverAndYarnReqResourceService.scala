@@ -17,8 +17,9 @@
 
 package org.apache.linkis.manager.rm.service.impl
 
+import org.apache.linkis.manager.am.conf.AMConfiguration
 import org.apache.linkis.manager.am.vo.CanCreateECRes
-import org.apache.linkis.manager.common.constant.RMConstant
+import org.apache.linkis.manager.common.constant.{AMConstant, RMConstant}
 import org.apache.linkis.manager.common.entity.resource._
 import org.apache.linkis.manager.common.entity.resource.ResourceType.DriverAndYarn
 import org.apache.linkis.manager.common.exception.RMWarnException
@@ -28,16 +29,22 @@ import org.apache.linkis.manager.rm.exception.RMErrorCode
 import org.apache.linkis.manager.rm.external.service.ExternalResourceService
 import org.apache.linkis.manager.rm.external.yarn.YarnResourceIdentifier
 import org.apache.linkis.manager.rm.service.{LabelResourceService, RequestResourceService}
+import org.apache.linkis.manager.rm.utils.{AcrossClusterRulesJudgeUtils, RMUtils}
 import org.apache.linkis.manager.rm.utils.AcrossClusterRulesJudgeUtils.{
   originClusterResourceCheck,
   targetClusterResourceCheck
 }
-import org.apache.linkis.manager.rm.utils.RMUtils
+
+import org.apache.commons.lang3.StringUtils
+
+import org.json4s.DefaultFormats
 
 class DriverAndYarnReqResourceService(
     labelResourceService: LabelResourceService,
     externalResourceService: ExternalResourceService
 ) extends RequestResourceService(labelResourceService) {
+
+  implicit val formats = DefaultFormats + ResourceSerializer
 
   override val resourceType: ResourceType = DriverAndYarn
 
@@ -52,20 +59,20 @@ class DriverAndYarnReqResourceService(
     }
     val requestedDriverAndYarnResource =
       resource.getMaxResource.asInstanceOf[DriverAndYarnResource]
-    val requestedYarnResource = requestedDriverAndYarnResource.getYarnResource
-    val yarnIdentifier = new YarnResourceIdentifier(requestedYarnResource.getQueueName)
+    val requestedYarnResource = requestedDriverAndYarnResource.yarnResource
+    val yarnIdentifier = new YarnResourceIdentifier(requestedYarnResource.queueName)
     val providedYarnResource =
       externalResourceService.getResource(ResourceType.Yarn, labelContainer, yarnIdentifier)
     val (maxCapacity, usedCapacity) =
       (providedYarnResource.getMaxResource, providedYarnResource.getUsedResource)
     logger.debug(
-      s"This queue: ${requestedYarnResource.getQueueName} used resource:$usedCapacity and max resource: $maxCapacity"
+      s"This queue: ${requestedYarnResource.queueName} used resource:$usedCapacity and max resource: $maxCapacity"
     )
-    val queueLeftResource = maxCapacity.minus(usedCapacity)
+    val queueLeftResource = maxCapacity - usedCapacity
     logger.info(
-      s"queue: ${requestedYarnResource.getQueueName} left $queueLeftResource, this request requires: $requestedYarnResource"
+      s"queue: ${requestedYarnResource.queueName} left $queueLeftResource, this request requires: $requestedYarnResource"
     )
-    if (!queueLeftResource.notLess(requestedYarnResource)) {
+    if (queueLeftResource < requestedYarnResource) {
       logger.info(
         s"user: ${labelContainer.getUserCreatorLabel.getUser} request queue resource $requestedYarnResource > left resource $queueLeftResource"
       )
@@ -89,24 +96,24 @@ class DriverAndYarnReqResourceService(
     }
     val requestedDriverAndYarnResource =
       resource.getMaxResource.asInstanceOf[DriverAndYarnResource]
-    val requestedYarnResource = requestedDriverAndYarnResource.getYarnResource
-    val yarnIdentifier = new YarnResourceIdentifier(requestedYarnResource.getQueueName)
+    val requestedYarnResource = requestedDriverAndYarnResource.yarnResource
+    val yarnIdentifier = new YarnResourceIdentifier(requestedYarnResource.queueName)
     val providedYarnResource =
       externalResourceService.getResource(ResourceType.Yarn, labelContainer, yarnIdentifier)
     val (maxCapacity, usedCapacity) =
       (providedYarnResource.getMaxResource, providedYarnResource.getUsedResource)
     logger.debug(
-      s"This queue: ${requestedYarnResource.getQueueName} used resource:$usedCapacity and max resource: $maxCapacity"
+      s"This queue: ${requestedYarnResource.queueName} used resource:$usedCapacity and max resource: $maxCapacity"
     )
-    val queueLeftResource = maxCapacity.minus(usedCapacity)
+    val queueLeftResource = maxCapacity - usedCapacity
     logger.info(
-      s"queue: ${requestedYarnResource.getQueueName} left $queueLeftResource, this request requires: $requestedYarnResource"
+      s"queue: ${requestedYarnResource.queueName} left $queueLeftResource, this request requires: $requestedYarnResource"
     )
     if (engineCreateRequest.getProperties != null) {
       // judge if is cross cluster task and origin cluster priority first
       originClusterResourceCheck(engineCreateRequest, maxCapacity, usedCapacity)
     }
-    if (!queueLeftResource.notLess(requestedYarnResource)) {
+    if (queueLeftResource < requestedYarnResource) {
       logger.info(
         s"user: ${labelContainer.getUserCreatorLabel.getUser} request queue resource $requestedYarnResource > left resource $queueLeftResource"
       )
@@ -136,30 +143,30 @@ class DriverAndYarnReqResourceService(
       case yarn: YarnResource =>
         val yarnAvailable = availableResource.asInstanceOf[YarnResource]
         val maxYarn = maxResource.asInstanceOf[YarnResource]
-        if (yarn.getQueueCores > yarnAvailable.getQueueCores) {
+        if (yarn.queueCores > yarnAvailable.queueCores) {
           (
             RMErrorCode.CLUSTER_QUEUE_CPU_INSUFFICIENT.getErrorCode,
             RMErrorCode.CLUSTER_QUEUE_CPU_INSUFFICIENT.getErrorDesc +
               RMUtils.getResourceInfoMsg(
                 RMConstant.CPU,
                 RMConstant.CPU_UNIT,
-                yarn.getQueueCores,
-                yarnAvailable.getQueueCores,
-                maxYarn.getQueueCores,
-                yarn.getQueueName
+                yarn.queueCores,
+                yarnAvailable.queueCores,
+                maxYarn.queueCores,
+                yarn.queueName
               )
           )
-        } else if (yarn.getQueueMemory > yarnAvailable.getQueueMemory) {
+        } else if (yarn.queueMemory > yarnAvailable.queueMemory) {
           (
             RMErrorCode.CLUSTER_QUEUE_MEMORY_INSUFFICIENT.getErrorCode,
             RMErrorCode.CLUSTER_QUEUE_MEMORY_INSUFFICIENT.getErrorDesc +
               RMUtils.getResourceInfoMsg(
                 RMConstant.MEMORY,
                 RMConstant.MEMORY_UNIT_BYTE,
-                yarn.getQueueMemory,
-                yarnAvailable.getQueueMemory,
-                maxYarn.getQueueMemory,
-                yarn.getQueueName
+                yarn.queueMemory,
+                yarnAvailable.queueMemory,
+                maxYarn.queueMemory,
+                yarn.queueName
               )
           )
         } else {
@@ -169,10 +176,10 @@ class DriverAndYarnReqResourceService(
               RMUtils.getResourceInfoMsg(
                 RMConstant.APP_INSTANCE,
                 RMConstant.INSTANCE_UNIT,
-                yarn.getQueueInstances,
-                yarnAvailable.getQueueInstances,
-                maxYarn.getQueueInstances,
-                yarn.getQueueName
+                yarn.queueInstances,
+                yarnAvailable.queueInstances,
+                maxYarn.queueInstances,
+                yarn.queueName
               )
           )
         }

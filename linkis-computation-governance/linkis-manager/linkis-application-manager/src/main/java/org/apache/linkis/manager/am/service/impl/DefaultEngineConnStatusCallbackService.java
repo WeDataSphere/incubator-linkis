@@ -18,7 +18,6 @@
 package org.apache.linkis.manager.am.service.impl;
 
 import org.apache.linkis.manager.am.conf.AMConfiguration;
-import org.apache.linkis.manager.am.converter.MetricsConverter;
 import org.apache.linkis.manager.am.service.EngineConnStatusCallbackService;
 import org.apache.linkis.manager.am.service.engine.EngineStopService;
 import org.apache.linkis.manager.common.constant.AMConstant;
@@ -27,6 +26,7 @@ import org.apache.linkis.manager.common.entity.metrics.AMNodeMetrics;
 import org.apache.linkis.manager.common.protocol.engine.EngineConnStatusCallback;
 import org.apache.linkis.manager.common.protocol.engine.EngineConnStatusCallbackToAM;
 import org.apache.linkis.manager.persistence.NodeMetricManagerPersistence;
+import org.apache.linkis.manager.service.common.metrics.MetricsConverter;
 import org.apache.linkis.rpc.message.annotation.Receiver;
 import org.apache.linkis.server.BDPJettyServerHelper;
 
@@ -56,7 +56,8 @@ public class DefaultEngineConnStatusCallbackService implements EngineConnStatusC
 
   @Autowired private EngineStopService engineStopService;
 
-  private static final String[] canRetryLogs = AMConfiguration.AM_CAN_RETRY_LOGS.split(";");
+  private static final String[] canRetryLogs =
+      AMConfiguration.AM_CAN_RETRY_LOGS().getValue().split(";");
 
   @Receiver
   public void dealEngineConnStatusCallback(EngineConnStatusCallback protocol) {
