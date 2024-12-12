@@ -1437,4 +1437,28 @@ public class UDFRestfulApi {
         .data("dependencies", dependencies)
         .data("fileName", fileName);
   }
+
+  @ApiImplicitParam(
+      name = "path",
+      dataType = "String",
+      value = "path",
+      example = "file:///mnt/bdap/hadoop/test1012_01.py")
+  @RequestMapping(path = "/get-register-functions", method = RequestMethod.GET)
+  public Message getRegisterFunctions(HttpServletRequest req, @RequestParam("path") String path) {
+    if (StringUtils.endsWithIgnoreCase(path, Constants.FILE_EXTENSION_PY)
+        || StringUtils.endsWithIgnoreCase(path, Constants.FILE_EXTENSION_SCALA)) {
+      try {
+        FsPath fsPath = new FsPath(path);
+        // 获取文件系统实例
+        FileSystem fileSystem = (FileSystem) FSFactory.getFs(fsPath);
+        fileSystem.init(null);
+        return Message.ok()
+            .data("functions", UdfUtils.getRegisterFunctions(fileSystem, fsPath, path));
+      } catch (Exception e) {
+        return Message.error("解析文件失败，错误信息：" + e);
+      }
+    } else {
+      return Message.error("仅支持.py和.scala文件");
+    }
+  }
 }
