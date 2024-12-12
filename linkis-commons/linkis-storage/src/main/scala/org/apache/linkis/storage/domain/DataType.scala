@@ -89,8 +89,7 @@ object DataType extends Logging {
       case LongType | BigIntType => if (isNumberNull(newValue)) null else newValue.toLong
       case FloatType => if (isNumberNull(newValue)) null else newValue.toFloat
       case DoubleType => if (isNumberNull(newValue)) null else newValue.toDouble
-      case DecimalType(_, _) =>
-        if (isNumberNull(newValue)) null else new JavaBigDecimal(newValue)
+      case DecimalType => if (isNumberNull(newValue)) null else new JavaBigDecimal(newValue)
       case DateType => if (isNumberNull(newValue)) null else Date.valueOf(newValue)
       case TimestampType =>
         if (isNumberNull(newValue)) null else Timestamp.valueOf(newValue).toString.stripSuffix(".0")
@@ -146,6 +145,7 @@ case object VarcharType extends DataType("varchar", 12)
 case object DateType extends DataType("date", 91)
 case object TimestampType extends DataType("timestamp", 93)
 case object BinaryType extends DataType("binary", -2)
+case object DecimalType extends DataType("decimal", 3)
 case object ArrayType extends DataType("array", 2003)
 case object MapType extends DataType("map", 2000)
 case object ListType extends DataType("list", 2001)
