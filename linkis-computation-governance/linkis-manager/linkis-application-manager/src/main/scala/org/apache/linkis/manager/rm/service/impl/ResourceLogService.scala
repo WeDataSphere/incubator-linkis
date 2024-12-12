@@ -148,7 +148,7 @@ class ResourceLogService extends Logging {
       metrics: String = null
   ): Unit = if (RMUtils.RM_RESOURCE_ACTION_RECORD.getValue) Utils.tryAndWarn {
     val userCreatorEngineType: CombinedLabel =
-      labelContainer.getCombinedResourceLabel
+      labelContainer.getCombinedUserCreatorEngineTypeLabel
     val engineInstanceLabel: EngineInstanceLabel = labelContainer.getEngineInstanceLabel
     val eMInstanceLabel = labelContainer.getEMInstanceLabel
     if (null == userCreatorEngineType) return

@@ -85,9 +85,7 @@ class UserResourceService {
       labelResource.setMaxResource(configuredResource)
       labelResource.setMinResource(Resource.initResource(labelResource.getResourceType))
       labelResource.setLeftResource(
-        labelResource.getMaxResource
-          .minus(labelResource.getUsedResource)
-          .minus(labelResource.getLockedResource)
+        labelResource.getMaxResource - labelResource.getUsedResource - labelResource.getLockedResource
       )
       val idList = new util.ArrayList[Integer]()
       idList.add(resourceId)

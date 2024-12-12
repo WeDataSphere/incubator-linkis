@@ -422,6 +422,10 @@
         </exclusion>
 
         <exclusion>
+          <groupId>org.json4s</groupId>
+          <artifactId>json4s-jackson_${scala.binary.version}</artifactId>
+        </exclusion>
+        <exclusion>
           <groupId>com.google.protobuf</groupId>
           <artifactId>protobuf-java</artifactId>
         </exclusion>
@@ -459,6 +463,13 @@
     <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-reflect</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.json4s</groupId>
+      <artifactId>json4s-jackson_${scala.binary.version}</artifactId>
+      <version>${json4s.version}</version>
       <scope>provided</scope>
     </dependency>
 

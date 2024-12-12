@@ -34,6 +34,9 @@ import org.apache.linkis.entrance.persistence.*;
 import org.apache.linkis.entrance.scheduler.EntranceGroupFactory;
 import org.apache.linkis.entrance.scheduler.EntranceParallelConsumerManager;
 import org.apache.linkis.entrance.scheduler.EntranceSchedulerContext;
+import org.apache.linkis.orchestrator.ecm.EngineConnManagerBuilder;
+import org.apache.linkis.orchestrator.ecm.EngineConnManagerBuilder$;
+import org.apache.linkis.orchestrator.ecm.entity.Policy;
 import org.apache.linkis.scheduler.Scheduler;
 import org.apache.linkis.scheduler.SchedulerContext;
 import org.apache.linkis.scheduler.executer.ExecutorManager;
@@ -187,7 +190,9 @@ public class EntranceSpringConfiguration {
   @Bean
   @ConditionalOnMissingBean
   public ExecutorManager executorManager(GroupFactory groupFactory) {
-    return new EntranceExecutorManagerImpl(groupFactory);
+    EngineConnManagerBuilder engineConnManagerBuilder = EngineConnManagerBuilder$.MODULE$.builder();
+    engineConnManagerBuilder.setPolicy(Policy.Process);
+    return new EntranceExecutorManagerImpl(groupFactory, engineConnManagerBuilder.build());
   }
 
   @Bean

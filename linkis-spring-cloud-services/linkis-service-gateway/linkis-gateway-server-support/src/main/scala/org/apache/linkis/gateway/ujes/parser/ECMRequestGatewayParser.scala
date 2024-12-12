@@ -25,6 +25,7 @@ import org.apache.linkis.gateway.springcloud.SpringCloudGatewayConfiguration.{
   normalPath,
   API_URL_PREFIX
 }
+import org.apache.linkis.protocol.utils.ZuulEntranceUtils
 
 import org.springframework.stereotype.Component
 

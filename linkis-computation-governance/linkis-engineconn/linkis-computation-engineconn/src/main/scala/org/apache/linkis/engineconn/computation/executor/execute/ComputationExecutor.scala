@@ -95,7 +95,7 @@ abstract class ComputationExecutor(val outputPrintLimit: Int = 1000)
 
   protected val failedTasks: Count = new Count
 
-  protected var lastTask: EngineConnTask = _
+  private var lastTask: EngineConnTask = _
 
   private val MAX_TASK_EXECUTE_NUM = ComputationExecutorConf.ENGINE_MAX_TASK_EXECUTE_NUM.getValue(
     EngineConnObject.getEngineCreationContext.getOptions

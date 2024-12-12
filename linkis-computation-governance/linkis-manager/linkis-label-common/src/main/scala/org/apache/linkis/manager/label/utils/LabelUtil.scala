@@ -17,13 +17,11 @@
 
 package org.apache.linkis.manager.label.utils
 
-import org.apache.linkis.manager.label.constant.LabelValueConstant
 import org.apache.linkis.manager.label.entity.{Label, TenantLabel}
 import org.apache.linkis.manager.label.entity.engine.{
   CodeLanguageLabel,
   EngineConnModeLabel,
   EngineTypeLabel,
-  EngingeConnRuntimeModeLabel,
   UserCreatorLabel
 }
 import org.apache.linkis.manager.label.entity.entrance.{
@@ -98,10 +96,6 @@ object LabelUtil {
     getLabelFromList[TenantLabel](labels)
   }
 
-  def getEngingeConnRuntimeModeLabel(labels: util.List[Label[_]]): EngingeConnRuntimeModeLabel = {
-    getLabelFromList[EngingeConnRuntimeModeLabel](labels)
-  }
-
   def getEngineConnModeLabel(labels: util.List[Label[_]]): EngineConnModeLabel = {
     getLabelFromList[EngineConnModeLabel](labels)
   }
@@ -150,15 +144,6 @@ object LabelUtil {
       case _ =>
     }
     null.asInstanceOf[A]
-  }
-
-  def isYarnClusterMode(labels: util.List[Label[_]]): Boolean = {
-    val label = LabelUtil.getEngingeConnRuntimeModeLabel(labels)
-    val isYarnClusterMode: Boolean = {
-      if (null != label && label.getModeValue.equals(LabelValueConstant.YARN_CLUSTER_VALUE)) true
-      else false
-    }
-    isYarnClusterMode
   }
 
   def getFromLabelStr(labelStr: String, key: String): String = {

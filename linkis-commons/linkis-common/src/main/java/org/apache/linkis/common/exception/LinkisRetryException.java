@@ -17,7 +17,7 @@
 
 package org.apache.linkis.common.exception;
 
-public class LinkisRetryException extends LinkisRuntimeException {
+public class LinkisRetryException extends LinkisException {
   LinkisRetryException(int errCode, String desc, String ip, int port, String serviceKind) {
     super(errCode, desc, ip, port, serviceKind);
   }
@@ -27,7 +27,7 @@ public class LinkisRetryException extends LinkisRuntimeException {
   }
 
   @Override
-  public ExceptionLevel getLevel() {
+  ExceptionLevel getLevel() {
     return ExceptionLevel.RETRY;
   }
 }

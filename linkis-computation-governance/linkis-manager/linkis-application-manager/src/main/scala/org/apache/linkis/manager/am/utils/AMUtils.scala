@@ -23,8 +23,10 @@ import org.apache.linkis.manager.common.entity.node.{EMNode, EngineNode}
 import org.apache.linkis.manager.common.entity.resource.{
   DriverAndYarnResource,
   Resource,
+  ResourceSerializer,
   ResourceType
 }
+import org.apache.linkis.manager.common.serializer.NodeResourceSerializer
 import org.apache.linkis.manager.label.entity.engine.EngineTypeLabel
 import org.apache.linkis.server.BDPJettyServerHelper
 
@@ -35,11 +37,14 @@ import java.util
 import scala.collection.JavaConverters._
 
 import com.google.gson.JsonObject
+import org.json4s.DefaultFormats
+import org.json4s.jackson.Serialization.write
 
 object AMUtils {
 
   lazy val GSON = BDPJettyServerHelper.gson
 
+  implicit val formats = DefaultFormats + ResourceSerializer + NodeResourceSerializer
   val mapper = BDPJettyServerHelper.jacksonJson
 
   def copyToEMVo(EMNodes: Array[EMNode]): util.ArrayList[EMNodeVo] = {
@@ -57,32 +62,26 @@ object AMUtils {
         if (node.getNodeResource.getMaxResource != null) {
           EMNodeVo.setMaxResource(
             mapper
-              .readValue(
-                mapper.writeValueAsString(node.getNodeResource.getMaxResource),
-                classOf[util.Map[String, Any]]
-              )
+              .readValue(write(node.getNodeResource.getMaxResource), classOf[util.Map[String, Any]])
           )
         }
         if (node.getNodeResource.getMinResource != null) {
           EMNodeVo.setMinResource(
             mapper
-              .readValue(
-                mapper.writeValueAsString(node.getNodeResource.getMinResource),
-                classOf[util.Map[String, Any]]
-              )
+              .readValue(write(node.getNodeResource.getMinResource), classOf[util.Map[String, Any]])
           )
         }
         if (node.getNodeResource.getUsedResource != null) {
           EMNodeVo.setUsedResource(
             mapper.readValue(
-              mapper.writeValueAsString(node.getNodeResource.getUsedResource),
+              write(node.getNodeResource.getUsedResource),
               classOf[util.Map[String, Any]]
             )
           )
         } else {
           EMNodeVo.setUsedResource(
             mapper.readValue(
-              mapper.writeValueAsString(Resource.initResource(ResourceType.Default)),
+              write(Resource.initResource(ResourceType.Default)),
               classOf[util.Map[String, Any]]
             )
           )
@@ -90,7 +89,7 @@ object AMUtils {
         if (node.getNodeResource.getLockedResource != null) {
           EMNodeVo.setLockedResource(
             mapper.readValue(
-              mapper.writeValueAsString(node.getNodeResource.getLockedResource),
+              write(node.getNodeResource.getLockedResource),
               classOf[util.Map[String, Any]]
             )
           )
@@ -98,7 +97,7 @@ object AMUtils {
         if (node.getNodeResource.getExpectedResource != null) {
           EMNodeVo.setExpectedResource(
             mapper.readValue(
-              mapper.writeValueAsString(node.getNodeResource.getExpectedResource),
+              write(node.getNodeResource.getExpectedResource),
               classOf[util.Map[String, Any]]
             )
           )
@@ -106,7 +105,7 @@ object AMUtils {
         if (node.getNodeResource.getLeftResource != null) {
           EMNodeVo.setLeftResource(
             mapper.readValue(
-              mapper.writeValueAsString(node.getNodeResource.getLeftResource),
+              write(node.getNodeResource.getLeftResource),
               classOf[util.Map[String, Any]]
             )
           )
@@ -173,7 +172,7 @@ object AMUtils {
 
         if (!node.getLabels.isEmpty) {
           val engineTypeLabel =
-            node.getLabels.asScala.find(_.isInstanceOf[EngineTypeLabel]).orNull
+            node.getLabels.asScala.find(_.isInstanceOf[EngineTypeLabel]).getOrElse(null)
           if (engineTypeLabel != null) {
             AMEngineNodeVo.setEngineType(
               engineTypeLabel.asInstanceOf[EngineTypeLabel] getEngineType
@@ -199,17 +198,16 @@ object AMUtils {
           }
           if (node.getNodeResource.getUsedResource != null) {
             val realResource = node.getNodeResource.getUsedResource match {
-              case dy: DriverAndYarnResource => dy.getLoadInstanceResource
+              case dy: DriverAndYarnResource => dy.loadInstanceResource
               case _ => node.getNodeResource.getUsedResource
             }
             AMEngineNodeVo.setUsedResource(
-              mapper
-                .readValue(mapper.writeValueAsString(realResource), classOf[util.Map[String, Any]])
+              mapper.readValue(write(realResource), classOf[util.Map[String, Any]])
             )
           } else {
             AMEngineNodeVo.setUsedResource(
               mapper.readValue(
-                mapper.writeValueAsString(Resource.initResource(ResourceType.Default)),
+                write(Resource.initResource(ResourceType.Default)),
                 classOf[util.Map[String, Any]]
               )
             )
@@ -217,7 +215,7 @@ object AMUtils {
           if (node.getNodeResource.getLockedResource != null) {
             AMEngineNodeVo.setLockedResource(
               mapper.readValue(
-                mapper.writeValueAsString(node.getNodeResource.getLockedResource),
+                write(node.getNodeResource.getLockedResource),
                 classOf[util.Map[String, Any]]
               )
             )
@@ -225,7 +223,7 @@ object AMUtils {
           if (node.getNodeResource.getExpectedResource != null) {
             AMEngineNodeVo.setExpectedResource(
               mapper.readValue(
-                mapper.writeValueAsString(node.getNodeResource.getExpectedResource),
+                write(node.getNodeResource.getExpectedResource),
                 classOf[util.Map[String, Any]]
               )
             )
@@ -233,7 +231,7 @@ object AMUtils {
           if (node.getNodeResource.getLeftResource != null) {
             AMEngineNodeVo.setLeftResource(
               mapper.readValue(
-                mapper.writeValueAsString(node.getNodeResource.getLeftResource),
+                write(node.getNodeResource.getLeftResource),
                 classOf[util.Map[String, Any]]
               )
             )

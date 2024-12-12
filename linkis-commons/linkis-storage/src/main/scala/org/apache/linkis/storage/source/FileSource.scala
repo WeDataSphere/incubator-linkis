@@ -51,10 +51,6 @@ trait FileSource extends Closeable {
 
   def getTotalLine: Int
 
-  def limitBytes(limitBytes: Long): FileSource
-
-  def limitColumnLength(limitColumnLength: Int): FileSource
-
   def getTypes: Array[String]
 
   def getFileSplits: Array[FileSplit]

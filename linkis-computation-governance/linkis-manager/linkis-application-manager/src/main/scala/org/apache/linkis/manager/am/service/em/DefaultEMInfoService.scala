@@ -21,9 +21,7 @@ import org.apache.linkis.common.ServiceInstance
 import org.apache.linkis.common.utils.{Logging, Utils}
 import org.apache.linkis.governance.common.conf.GovernanceCommonConf
 import org.apache.linkis.manager.am.conf.AMConfiguration
-import org.apache.linkis.manager.am.converter.MetricsConverter
 import org.apache.linkis.manager.am.manager.EMNodeManager
-import org.apache.linkis.manager.am.pointer.NodePointerBuilder
 import org.apache.linkis.manager.am.service.engine.EngineInfoService
 import org.apache.linkis.manager.common.entity.enumeration.NodeHealthy
 import org.apache.linkis.manager.common.entity.metrics.NodeHealthyInfo
@@ -42,6 +40,8 @@ import org.apache.linkis.manager.persistence.{
   ResourceManagerPersistence
 }
 import org.apache.linkis.manager.rm.service.ResourceManager
+import org.apache.linkis.manager.service.common.metrics.MetricsConverter
+import org.apache.linkis.manager.service.common.pointer.NodePointerBuilder
 import org.apache.linkis.rpc.message.annotation.Receiver
 import org.apache.linkis.server.toScalaBuffer
 
@@ -99,7 +99,7 @@ class DefaultEMInfoService extends EMInfoService with Logging {
     val label = new AliasServiceInstanceLabel
     label.setAlias(GovernanceCommonConf.ENGINE_CONN_MANAGER_SPRING_NAME.getValue)
     val instances = nodeLabelService.getNodesByLabel(label)
-    val resourceInfo = resourceManager.getResourceInfo(instances.asScala.toArray).resourceInfo
+    val resourceInfo = resourceManager.getResourceInfo(instances.asScala.toSeq.toArray).resourceInfo
     val resourceInfoMap = resourceInfo.asScala.map(r => (r.getServiceInstance.toString, r)).toMap
     instances.asScala
       .map(emNodeManager.getEM)
@@ -179,19 +179,18 @@ class DefaultEMInfoService extends EMInfoService with Logging {
           val ecmNodeResource = ecmInstance.getNodeResource
           // 资源对比，资源重置
           if (
-              (!(useResource.equalsTo(ecmNodeResource.getUsedResource)) || (!(lockResource
-                .equalsTo(ecmNodeResource.getLockedResource))))
+              (!(useResource == ecmNodeResource.getUsedResource)) || (!(lockResource == ecmNodeResource.getLockedResource))
           ) {
             logger.info(
               MessageFormat.format(
                 "ECM:{0} resources will be reset, Record Resources:{1} ,Real Resources:{2}",
                 ecmInstance.getServiceInstance.getInstance,
-                ecmNodeResource.getUsedResource.add(ecmNodeResource.getLockedResource),
+                ecmNodeResource.getUsedResource + ecmNodeResource.getLockedResource,
                 realSumResource
               )
             )
             ecmNodeResource.setLockedResource(lockResource)
-            ecmNodeResource.setLeftResource(ecmNodeResource.getMaxResource.minus(realSumResource))
+            ecmNodeResource.setLeftResource(ecmNodeResource.getMaxResource - realSumResource)
             ecmNodeResource.setUsedResource(useResource)
             val persistence = ResourceUtils.toPersistenceResource(ecmNodeResource)
             val resourceLabel = labelManagerPersistence.getLabelByResource(persistence)
@@ -254,20 +253,18 @@ class DefaultEMInfoService extends EMInfoService with Logging {
           val (sumResource, uedResource, lockResource) =
             collectResource(userEngineNodeFilter, userResourceType)
           if (
-              (!(uedResource.equalsTo(userPersistenceResource.getUsedResource)) || (!(lockResource
-                .equalsTo(userPersistenceResource.getLockedResource))))
+              (!(uedResource == userPersistenceResource.getUsedResource)) || (!(lockResource == userPersistenceResource.getLockedResource))
           ) {
             logger.info(
               MessageFormat.format(
                 "LabelUser:{0} resources will be reset, Record Resources:{1} ,Real Resources:{2}",
                 labelUser,
-                userPersistenceResource.getUsedResource
-                  .add(userPersistenceResource.getLockedResource),
+                userPersistenceResource.getUsedResource + userPersistenceResource.getLockedResource,
                 sumResource
               )
             )
             userPersistenceResource.setLeftResource(
-              userPersistenceResource.getMaxResource.minus(sumResource)
+              userPersistenceResource.getMaxResource - sumResource
             )
             userPersistenceResource.setUsedResource(uedResource)
             userPersistenceResource.setLockedResource(lockResource)
@@ -300,9 +297,9 @@ class DefaultEMInfoService extends EMInfoService with Logging {
       )
     ) { case ((accSum, accUed, accLock), nodeResource) =>
       (
-        accSum.add(nodeResource.getUsedResource.add(nodeResource.getLockedResource)),
-        accUed.add(nodeResource.getUsedResource),
-        accLock.add(nodeResource.getLockedResource)
+        accSum + nodeResource.getUsedResource + nodeResource.getLockedResource,
+        accUed + nodeResource.getUsedResource,
+        accLock + nodeResource.getLockedResource
       )
     }
   }

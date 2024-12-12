@@ -24,7 +24,6 @@ import org.apache.linkis.governance.common.protocol.conf.{
   AcrossClusterResponse
 }
 import org.apache.linkis.manager.am.conf.{AMConfiguration, ManagerMonitorConf}
-import org.apache.linkis.manager.am.converter.MetricsConverter
 import org.apache.linkis.manager.common.conf.RMConfiguration
 import org.apache.linkis.manager.common.entity.enumeration.NodeStatus
 import org.apache.linkis.manager.common.entity.node.EngineNode
@@ -57,6 +56,7 @@ import org.apache.linkis.manager.rm.restful.vo.{UserCreatorEngineType, UserResou
 import org.apache.linkis.manager.rm.service.{LabelResourceService, ResourceManager}
 import org.apache.linkis.manager.rm.service.impl.UserResourceService
 import org.apache.linkis.manager.rm.utils.{RMUtils, UserConfiguration}
+import org.apache.linkis.manager.service.common.metrics.MetricsConverter
 import org.apache.linkis.rpc.Sender
 import org.apache.linkis.server.{toScalaBuffer, BDPJettyServerHelper, Message}
 import org.apache.linkis.server.security.SecurityFilter
@@ -396,17 +396,16 @@ class RMMonitorRest extends Logging {
         queueInfo.put("queuename", maxResource)
         queueInfo.put(
           "maxResources",
-          Map("memory" -> maxResource.getQueueName, "cores" -> maxResource.getQueueCores)
+          Map("memory" -> maxResource.queueMemory, "cores" -> maxResource.queueCores)
         )
         queueInfo.put(
           "usedResources",
-          Map("memory" -> usedResource.getQueueMemory, "cores" -> usedResource.getQueueCores)
+          Map("memory" -> usedResource.queueMemory, "cores" -> usedResource.queueCores)
         )
-        usedMemoryPercentage = usedResource.getQueueMemory
-          .asInstanceOf[Double] / maxResource.getQueueMemory.asInstanceOf[Double]
-        usedCPUPercentage =
-          usedResource.getQueueCores.asInstanceOf[Double] / maxResource.getQueueCores
-            .asInstanceOf[Double]
+        usedMemoryPercentage = usedResource.queueMemory
+          .asInstanceOf[Double] / maxResource.queueMemory.asInstanceOf[Double]
+        usedCPUPercentage = usedResource.queueCores.asInstanceOf[Double] / maxResource.queueCores
+          .asInstanceOf[Double]
         queueInfo.put(
           "usedPercentage",
           Map("memory" -> usedMemoryPercentage, "cores" -> usedCPUPercentage)
@@ -422,10 +421,10 @@ class RMMonitorRest extends Logging {
     val yarnAppsInfo =
       externalResourceService.getAppInfo(ResourceType.Yarn, labelContainer, yarnIdentifier)
     val userList =
-      yarnAppsInfo.asScala.groupBy(_.asInstanceOf[YarnAppInfo].getUser).keys.toList.asJava
+      yarnAppsInfo.asScala.groupBy(_.asInstanceOf[YarnAppInfo].user).keys.toList.asJava
     Utils.tryCatch {
       val nodesList = getEngineNodesByUserList(userList, true)
-      yarnAppsInfo.asScala.groupBy(_.asInstanceOf[YarnAppInfo].getUser).foreach { userAppInfo =>
+      yarnAppsInfo.asScala.groupBy(_.asInstanceOf[YarnAppInfo].user).foreach { userAppInfo =>
         var busyResource = Resource.initResource(ResourceType.Yarn).asInstanceOf[YarnResource]
         var idleResource = Resource.initResource(ResourceType.Yarn).asInstanceOf[YarnResource]
         val appIdToEngineNode = new mutable.HashMap[String, EngineNode]()
@@ -435,64 +434,63 @@ class RMMonitorRest extends Logging {
             if (node.getNodeResource != null && node.getNodeResource.getUsedResource != null) {
               node.getNodeResource.getUsedResource match {
                 case driverYarn: DriverAndYarnResource
-                    if driverYarn.getYarnResource.getQueueName
-                      .equals(yarnIdentifier.getQueueName) =>
-                  appIdToEngineNode.put(driverYarn.getYarnResource.getApplicationId, node)
-                case yarn: YarnResource if yarn.getQueueName.equals(yarnIdentifier.getQueueName) =>
-                  appIdToEngineNode.put(yarn.getApplicationId, node)
+                    if driverYarn.yarnResource.queueName.equals(yarnIdentifier.getQueueName) =>
+                  appIdToEngineNode.put(driverYarn.yarnResource.applicationId, node)
+                case yarn: YarnResource if yarn.queueName.equals(yarnIdentifier.getQueueName) =>
+                  appIdToEngineNode.put(yarn.applicationId, node)
                 case _ =>
               }
             }
           })
         }
         userAppInfo._2.foreach { appInfo =>
-          appIdToEngineNode.get(appInfo.asInstanceOf[YarnAppInfo].getId) match {
+          appIdToEngineNode.get(appInfo.asInstanceOf[YarnAppInfo].id) match {
             case Some(node) =>
               if (NodeStatus.Busy == node.getNodeStatus) {
-                busyResource = busyResource.add(appInfo.asInstanceOf[YarnAppInfo].getUsedResource)
+                busyResource = busyResource.add(appInfo.asInstanceOf[YarnAppInfo].usedResource)
               } else {
-                idleResource = idleResource.add(appInfo.asInstanceOf[YarnAppInfo].getUsedResource)
+                idleResource = idleResource.add(appInfo.asInstanceOf[YarnAppInfo].usedResource)
               }
             case None =>
-              busyResource = busyResource.add(appInfo.asInstanceOf[YarnAppInfo].getUsedResource)
+              busyResource = busyResource.add(appInfo.asInstanceOf[YarnAppInfo].usedResource)
           }
         }
 
         val totalResource = busyResource.add(idleResource)
-        if (totalResource.moreThan(Resource.getZeroResource(totalResource))) {
+        if (totalResource > Resource.getZeroResource(totalResource)) {
           val userResource = new mutable.HashMap[String, Any]()
           userResource.put("username", userAppInfo._1)
           val queueResource = providedYarnResource.getMaxResource.asInstanceOf[YarnResource]
           if (usedMemoryPercentage > usedCPUPercentage) {
             userResource.put(
               "busyPercentage",
-              busyResource.getQueueMemory.asInstanceOf[Double] / queueResource.getQueueMemory
+              busyResource.queueMemory.asInstanceOf[Double] / queueResource.queueMemory
                 .asInstanceOf[Double]
             )
             userResource.put(
               "idlePercentage",
-              idleResource.getQueueMemory.asInstanceOf[Double] / queueResource.getQueueMemory
+              idleResource.queueMemory.asInstanceOf[Double] / queueResource.queueMemory
                 .asInstanceOf[Double]
             )
             userResource.put(
               "totalPercentage",
-              totalResource.getQueueMemory.asInstanceOf[Double] / queueResource.getQueueMemory
+              totalResource.queueMemory.asInstanceOf[Double] / queueResource.queueMemory
                 .asInstanceOf[Double]
             )
           } else {
             userResource.put(
               "busyPercentage",
-              busyResource.getQueueCores.asInstanceOf[Double] / queueResource.getQueueCores
+              busyResource.queueCores.asInstanceOf[Double] / queueResource.queueCores
                 .asInstanceOf[Double]
             )
             userResource.put(
               "idlePercentage",
-              idleResource.getQueueCores.asInstanceOf[Double] / queueResource.getQueueCores
+              idleResource.queueCores.asInstanceOf[Double] / queueResource.queueCores
                 .asInstanceOf[Double]
             )
             userResource.put(
               "totalPercentage",
-              totalResource.getQueueCores.asInstanceOf[Double] / queueResource.getQueueCores
+              totalResource.queueCores.asInstanceOf[Double] / queueResource.queueCores
                 .asInstanceOf[Double]
             )
           }
@@ -632,21 +630,21 @@ class RMMonitorRest extends Logging {
         val usedResource = engineResource.getUsedResource.asInstanceOf[LoadInstanceResource]
         val lockedResource = engineResource.getLockedResource.asInstanceOf[LoadInstanceResource]
         val maxResource = engineResource.getMaxResource.asInstanceOf[LoadInstanceResource]
-        val usedMemory = usedResource.getMemory
-        val usedCores = usedResource.getCores
-        val usedInstances = usedResource.getInstances
+        val usedMemory = usedResource.memory
+        val usedCores = usedResource.cores
+        val usedInstances = usedResource.instances
         totalUsedMemory += usedMemory
         totalUsedCores += usedCores
         totalUsedInstances += usedInstances
-        val lockedMemory = lockedResource.getMemory
-        val lockedCores = lockedResource.getCores
-        val lockedInstances = lockedResource.getInstances
+        val lockedMemory = lockedResource.memory
+        val lockedCores = lockedResource.cores
+        val lockedInstances = lockedResource.instances
         totalLockedMemory += lockedMemory
         totalLockedCores += lockedCores
         totalLockedInstances += lockedInstances
-        val maxMemory = maxResource.getMemory
-        val maxCores = maxResource.getCores
-        val maxInstances = maxResource.getInstances
+        val maxMemory = maxResource.memory
+        val maxCores = maxResource.cores
+        val maxInstances = maxResource.instances
         totalMaxMemory += maxMemory
         totalMaxCores += maxCores
         totalMaxInstances += maxInstances
@@ -704,16 +702,14 @@ class RMMonitorRest extends Logging {
         val nodeResource = CommonNodeResource.initNodeResource(ResourceType.LoadInstance)
         engineTypeResourceMap.put(engineType, nodeResource)
       }
-      val resource = engineTypeResourceMap(engineType)
-      resource.setUsedResource(node.getNodeResource.getUsedResource.add(resource.getUsedResource))
+      val resource = engineTypeResourceMap.get(engineType).get
+      resource.setUsedResource(node.getNodeResource.getUsedResource + resource.getUsedResource)
       // combined label
       val combinedLabel =
         combinedLabelBuilder.build("", Lists.newArrayList(userCreatorLabel, engineTypeLabel));
       var labelResource = labelResourceService.getLabelResource(combinedLabel)
       if (labelResource == null) {
-        resource.setLeftResource(
-          node.getNodeResource.getMaxResource.minus(resource.getUsedResource)
-        )
+        resource.setLeftResource(node.getNodeResource.getMaxResource - resource.getUsedResource)
       } else {
         labelResource = ResourceUtils.convertTo(labelResource, ResourceType.LoadInstance)
         resource.setUsedResource(labelResource.getUsedResource)
@@ -723,7 +719,7 @@ class RMMonitorRest extends Logging {
       }
       resource.getLeftResource match {
         case dResource: DriverAndYarnResource =>
-          resource.setLeftResource(dResource.getLoadInstanceResource)
+          resource.setLeftResource(dResource.loadInstanceResource)
         case _ =>
       }
     }
@@ -766,7 +762,7 @@ class RMMonitorRest extends Logging {
                applicationList
                  .get("usedResource")
                  .asInstanceOf[Resource]
-             }).add(node.getNodeResource.getUsedResource)
+             }) + node.getNodeResource.getUsedResource
           )
           applicationList.put(
             "maxResource",
@@ -776,7 +772,7 @@ class RMMonitorRest extends Logging {
                applicationList
                  .get("maxResource")
                  .asInstanceOf[Resource]
-             }).add(node.getNodeResource.getMaxResource)
+             }) + node.getNodeResource.getMaxResource
           )
           applicationList.put(
             "minResource",
@@ -786,7 +782,7 @@ class RMMonitorRest extends Logging {
                applicationList
                  .get("minResource")
                  .asInstanceOf[Resource]
-             }).add(node.getNodeResource.getMinResource)
+             }) + node.getNodeResource.getMinResource
           )
           applicationList.put(
             "lockedResource",
@@ -796,7 +792,7 @@ class RMMonitorRest extends Logging {
                applicationList
                  .get("lockedResource")
                  .asInstanceOf[Resource]
-             }).add(node.getNodeResource.getLockedResource)
+             }) + node.getNodeResource.getLockedResource
           )
           val engineInstance = new mutable.HashMap[String, Any]
           engineInstance.put("creator", userCreatorLabel.getCreator)
