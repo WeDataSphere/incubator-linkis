@@ -180,7 +180,7 @@ abstract class EntranceServer extends Logging {
           val priorityValue: AnyRef = properties.get(ENGINE_PRIORITY_RUNTIME_KEY)
           if (priorityValue != null) {
             val value: Int = priorityValue.toString.toInt
-            job.setProgress(value)
+            job.setPriority(value)
           }
         }
       }
