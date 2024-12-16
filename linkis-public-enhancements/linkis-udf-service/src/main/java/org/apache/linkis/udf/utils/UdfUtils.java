@@ -22,6 +22,7 @@ import org.apache.linkis.common.io.FsPath;
 import org.apache.linkis.common.utils.JsonUtils;
 import org.apache.linkis.common.utils.Utils;
 import org.apache.linkis.storage.fs.FileSystem;
+import org.apache.linkis.storage.utils.StorageUtils$;
 import org.apache.linkis.udf.conf.Constants;
 import org.apache.linkis.udf.exception.UdfException;
 
@@ -319,18 +320,19 @@ public class UdfUtils {
   }
 
   public static List<String> extractPythonMethodNames(String udfPath) throws Exception {
+    String localPath = udfPath.replace(StorageUtils$.MODULE$.FILE_SCHEMA(), "");
     String exec =
         Utils.exec(
             (new String[] {
               Constants.PYTHON_COMMAND.getValue(),
               Configuration.getLinkisHome() + "/admin/" + "linkis_udf_get_python_methods.py",
-              udfPath
+              localPath
             }));
     logger.info(
         "execute python script to get python method name...{} {} {}",
         Constants.PYTHON_COMMAND.getValue(),
         Configuration.getLinkisHome() + "/admin/" + "linkis_udf_get_python_methods.py",
-        udfPath);
+        localPath);
     // 将exec转换为List<String>，exec为一个json数组
     return JsonUtils.jackson().readValue(exec, new TypeReference<List<String>>() {});
   }

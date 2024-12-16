@@ -1447,21 +1447,23 @@ public class UDFRestfulApi {
   public Message getRegisterFunctions(HttpServletRequest req, @RequestParam("path") String path) {
     if (StringUtils.endsWithIgnoreCase(path, Constants.FILE_EXTENSION_PY)
         || StringUtils.endsWithIgnoreCase(path, Constants.FILE_EXTENSION_SCALA)) {
-      try {
-        // 获取登录用户
-        String username = ModuleUserUtils.getOperationUser(req, "get-register-functions");
-        FsPath fsPath = new FsPath(path);
-        // 获取文件系统实例
-        FileSystem fileSystem = (FileSystem) FSFactory.getFs(fsPath);
-        fileSystem.init(null);
-        if (udfService.isUDFManager(username) || username.equalsIgnoreCase(fileSystem.getUser())) {
-          return Message.ok()
-              .data("functions", UdfUtils.getRegisterFunctions(fileSystem, fsPath, path));
-        } else {
-          return Message.error("您没有权限访问该文件");
+      if (StringUtils.startsWithIgnoreCase(path, StorageUtils$.MODULE$.FILE_SCHEMA())) {
+        try {
+          FsPath fsPath = new FsPath(path);
+          // 获取文件系统实例
+          FileSystem fileSystem = (FileSystem) FSFactory.getFs(fsPath);
+          fileSystem.init(null);
+          if (fileSystem.canRead(fsPath)) {
+            return Message.ok()
+                .data("functions", UdfUtils.getRegisterFunctions(fileSystem, fsPath, path));
+          } else {
+            return Message.error("您没有权限访问该文件");
+          }
+        } catch (Exception e) {
+          return Message.error("解析文件失败，错误信息：" + e);
         }
-      } catch (Exception e) {
-        return Message.error("解析文件失败，错误信息：" + e);
+      } else {
+        return Message.error("仅支持本地文件");
       }
     } else {
       return Message.error("仅支持.py和.scala文件");
