@@ -61,21 +61,17 @@ object IOHelp {
         writer.addRecord(ioRecord)
         writer.toString()
       } else if (method.params.length == 3) {
-        val position =
-          if (method.params(1).toString.toInt < 0) {
-            0
-          } else {
-            method.params(1).toString.toInt
-          }
+        val parm1 = BigDecimal(method.params(1).toString).intValue()
+        val parm2 = BigDecimal(method.params(2).toString).intValue()
+        if (parm1 > 0) {
+          inputStream.skip(parm1)
+        }
         val fetchSize =
-          if (method.params(2).toString.toInt > maxPageSize) {
+          if (parm2 > maxPageSize) {
             maxPageSize.toInt
           } else {
-            method.params(2).toString.toInt
+            parm2
           }
-        if (position > 0) {
-          inputStream.skip(position)
-        }
         val bytes = new Array[Byte](fetchSize)
         val len = StorageUtils.readBytes(inputStream, bytes, fetchSize)
         val ioMetaData = new IOMetaData(0, len)
