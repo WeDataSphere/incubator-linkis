@@ -1448,12 +1448,18 @@ public class UDFRestfulApi {
     if (StringUtils.endsWithIgnoreCase(path, Constants.FILE_EXTENSION_PY)
         || StringUtils.endsWithIgnoreCase(path, Constants.FILE_EXTENSION_SCALA)) {
       try {
+        // 获取登录用户
+        String username = ModuleUserUtils.getOperationUser(req, "get-register-functions");
         FsPath fsPath = new FsPath(path);
         // 获取文件系统实例
         FileSystem fileSystem = (FileSystem) FSFactory.getFs(fsPath);
         fileSystem.init(null);
-        return Message.ok()
-            .data("functions", UdfUtils.getRegisterFunctions(fileSystem, fsPath, path));
+        if (udfService.isUDFManager(username) || username.equalsIgnoreCase(fileSystem.getUser())) {
+          return Message.ok()
+              .data("functions", UdfUtils.getRegisterFunctions(fileSystem, fsPath, path));
+        } else {
+          return Message.error("您没有权限访问该文件");
+        }
       } catch (Exception e) {
         return Message.error("解析文件失败，错误信息：" + e);
       }
