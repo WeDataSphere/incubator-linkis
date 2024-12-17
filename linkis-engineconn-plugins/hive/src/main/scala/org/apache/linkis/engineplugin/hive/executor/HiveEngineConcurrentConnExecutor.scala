@@ -157,16 +157,15 @@ class HiveEngineConcurrentConnExecutor(
       engineExecutorContext.appendStdout(s"$getId >> ${realCode.trim.substring(0, 500)} ...")
     } else engineExecutorContext.appendStdout(s"$getId >> ${realCode.trim}")
     val tokens = realCode.trim.split("""\s+""")
-
+    val classLoader: ClassLoader = Thread.currentThread().getContextClassLoader
     val operation = new Callable[ExecuteResponse] {
       override def call(): ExecuteResponse = {
+        Thread.currentThread().setContextClassLoader(classLoader)
         SessionState.setCurrentSessionState(sessionState)
         sessionState.setLastCommand(code)
-
         val proc = CommandProcessorFactory.get(tokens, hiveConf)
         LOG.debug("ugi is " + ugi.getUserName)
-        Utils.tryFinally {
-          val resp: ExecuteResponse = ugi.doAs(new PrivilegedExceptionAction[ExecuteResponse]() {
+        ugi.doAs(new PrivilegedExceptionAction[ExecuteResponse]() {
             override def run(): ExecuteResponse = {
               proc match {
                 case any if HiveDriverProxy.isDriver(any) =>
@@ -197,18 +196,10 @@ class HiveEngineConcurrentConnExecutor(
               }
             }
           })
-          logger.info(s"HiveEngineConcurrentConnExecutor response is: ${resp}")
-          resp
-        } {
-          logger.info(s"HiveEngineConcurrentConnExecutor task final execute.")
-        }
       }
     }
-    Utils.tryAndWarn {
-      val future: Future[ExecuteResponse] = backgroundOperationPool.submit(operation)
-      logger.info(s"${future} and status ${future.isDone}")
-      future.get()
-    }
+    val future: Future[ExecuteResponse] = backgroundOperationPool.submit(operation)
+    future.get()
   }
 
   def logMemoryCache(): Unit = {
