@@ -31,6 +31,7 @@ import org.apache.linkis.engineconn.acessible.executor.listener.event.{
 import org.apache.linkis.engineconn.acessible.executor.log.LogHelper
 import org.apache.linkis.engineconn.computation.executor.conf.ComputationExecutorConf
 import org.apache.linkis.engineconn.computation.executor.cs.CSTableResultSetWriter
+import org.apache.linkis.engineconn.core.EngineConnObject
 import org.apache.linkis.engineconn.executor.ExecutorExecutionContext
 import org.apache.linkis.engineconn.executor.entity.Executor
 import org.apache.linkis.engineconn.executor.listener.{
@@ -192,7 +193,9 @@ class EngineExecutionContext(executor: ComputationExecutor, executorUser: String
     var taskLog = log
     val limitLength = ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_LENGTH.getValue
     if (
-        ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.getValue &&
+        ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.getValue(
+          EngineConnObject.getEngineCreationContext.getOptions
+        ) &&
         log.length > limitLength
     ) {
       taskLog = s"${log.substring(0, limitLength)}..."
