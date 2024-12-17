@@ -38,9 +38,16 @@ object SchedulerConfiguration {
 
   // support fifo pfifo
   val FIFO_QUEUE_STRATEGY =
-    CommonVars("linkis.fifo.queue.strategy", "fifo").getValue
+    CommonVars("linkis.fifo.queue.strategy", FIFO_SCHEDULER_STRATEGY).getValue
+
+  val SUPPORT_PRIORITY_TASK_USERS =
+    CommonVars("linkis.fifo.queue.support.priority.users", "").getValue
 
   val MAX_PRIORITY_QUEUE_CACHE_SIZE =
-    CommonVars("linkis.fifo.priority.queue.max.cache.size", 1000).getValue
+    CommonVars("linkis.fifo.priority.queue.max.cache.size", 5).getValue
+
   val ENGINE_PRIORITY_RUNTIME_KEY = "wds.linkis.engine.runtime.priority"
+
+  val PFIFO_SCHEDULER_STRATEGY = "pfifo"
+  val FIFO_SCHEDULER_STRATEGY = "fifo"
 }

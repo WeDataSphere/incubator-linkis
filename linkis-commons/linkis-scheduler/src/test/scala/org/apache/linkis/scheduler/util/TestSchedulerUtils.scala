@@ -15,32 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.linkis.scheduler.queue
+package org.apache.linkis.scheduler.util
 
-import java.util
-import java.util.{PriorityQueue, Queue}
+import org.apache.linkis.scheduler.util.SchedulerUtils.{getEngineTypeFromGroupName, getUserFromGroupName}
+import org.junit.jupiter.api.{Assertions, Test}
 
-case class PriorityFIFOQueue() {
-  case class QueueItem(item: Queue[String], priority: Int)
-
-  import java.util.Comparator
-
-  val cNode: Comparator[QueueItem] = new Comparator[QueueItem]() {
-    override def compare(o1: QueueItem, o2: QueueItem): Int = o2.priority - o1.priority
+class TestSchedulerUtils {
+  @Test
+  def testShellDangerCode: Unit = {
+    val groupName = "exec_id018033linkis-cg-entrancegz.xg.bdplinkis110002.webank:9104APPName_hadoop_spark_0, taskId: 2392611"
+    val username: String = getUserFromGroupName(groupName)
+    val engineType: String = getEngineTypeFromGroupName(groupName)
+    Assertions.assertEquals("hadoop", username)
+    Assertions.assertEquals("spark", engineType)
   }
-
-  private val queue = new PriorityQueue[QueueItem](cNode)
-  private var _size = 0
-  private var _count: Long = 0L
-
-  def size: Int = _size
-
-  def isEmpty: Boolean = _size == 0
-
-  def enqueue(item: String, priority: Int): Unit = {
-    val deque = new util.ArrayDeque[String]()
-    deque.add(item)
-    queue.add(QueueItem(deque, priority))
-  }
-
 }

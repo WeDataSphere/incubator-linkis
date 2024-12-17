@@ -21,21 +21,27 @@ import org.apache.linkis.common.utils.Logging
 import org.apache.linkis.scheduler.conf.SchedulerConfiguration
 
 import java.util
+import java.util.Collections
+import java.util.Comparator
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.PriorityBlockingQueue
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * 优先级队列元素
- * @param element 实际元素
- * @param priority 优先级
- * @param timestamp 唯一索引
+ * @param element
+ *   实际元素
+ * @param priority
+ *   优先级
+ * @param index
+ *   唯一索引
  */
-case class PriorityQueueElement(element: Any, priority: Int, timestamp: Int) extends Comparable[PriorityQueueElement] {
-  override def compareTo(queueItem: PriorityQueueElement): Int = if (priority != queueItem.priority) priority - queueItem.priority
-  else queueItem.timestamp - timestamp
-}
+case class PriorityQueueElement(element: Any, priority: Int, index: Int)
 
 /**
  * 固定大小集合，元素满后会移除最先插入集合的元素
- * @param maxSize 集合大小
+ * @param maxSize
+ *   集合大小
  * @tparam K
  * @tparam V
  */
@@ -51,21 +57,36 @@ class FixedSizeCollection[K, V](val maxSize: Int) extends util.LinkedHashMap[K, 
 class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging {
 
   private val maxCapacity = group.getMaximumCapacity
+
   /** 优先级队列 */
-  private val priorityEventQueue = new util.ArrayList[PriorityQueueElement](group.getMaximumCapacity)
+  private val priorityEventQueue = new PriorityBlockingQueue[PriorityQueueElement](
+    group.getMaximumCapacity,
+    new Comparator[PriorityQueueElement] {
+
+      override def compare(o1: PriorityQueueElement, o2: PriorityQueueElement): Int =
+        if (o1.priority != o2.priority) o2.priority - o1.priority
+        else o1.index - o2.index
+
+    }
+  )
+
   /** 累加器 1.越先进队列值越小，优先级相同时控制先进先出 2.队列元素唯一索引，不会重复 */
-  private var timestamp = 0
+  private val index = new AtomicInteger
+
   /** 记录队列中当前所有元素索引，元素存入优先级队列时添加，从优先级队列移除时删除 */
-  private val indexSet = new util.HashSet[Int]
+  private val indexSet = ConcurrentHashMap.newKeySet[Int]
+
   /** 记录已经消费的元素，会有固定缓存大小，默认1000，元素从优先级队列移除时添加 */
-  val fixedSizeCollection = new FixedSizeCollection[Integer, Any](SchedulerConfiguration.MAX_PRIORITY_QUEUE_CACHE_SIZE)
+  val fixedSizeCollection = Collections.synchronizedMap(
+    new FixedSizeCollection[Integer, Any](SchedulerConfiguration.MAX_PRIORITY_QUEUE_CACHE_SIZE)
+  )
 
   private val writeLock = new Array[Byte](0)
   private val readLock = new Array[Byte](0)
 
   protected[this] var realSize = size
-  override def isEmpty: Boolean = size == 0
-  override def isFull: Boolean = size == maxCapacity
+  override def isEmpty: Boolean = size <= 0
+  override def isFull: Boolean = size >= maxCapacity
   def size: Int = priorityEventQueue.size
 
   /**
@@ -74,12 +95,8 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    * @return
    */
   private def addToPriorityQueue(element: PriorityQueueElement): Boolean = {
-    val lastIndex: Int = size
-    priorityEventQueue.add(lastIndex, element)
-    indexSet.add(element.timestamp)
-    // 节点上浮
-    siftUp(lastIndex)
-    // 新增成功
+    priorityEventQueue.offer(element)
+    indexSet.add(element.index)
     true
   }
 
@@ -88,19 +105,9 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    * @return
    */
   private def getAndRemoveTop: PriorityQueueElement = {
-    // 根节点为最大值
-    val top: PriorityQueueElement = priorityEventQueue.get(0)
-    val lastIndex: Int = size - 1
-    val lastNode: PriorityQueueElement = priorityEventQueue.get(lastIndex)
-    priorityEventQueue.remove(lastIndex)
-    if (size > 0) {
-      priorityEventQueue.set(0, lastNode)
-      // 节点下沉
-      siftDown(0)
-    }
-    indexSet.remove(top.timestamp)
-    fixedSizeCollection.put(top.timestamp, top.element)
-    // 返回最大值
+    val top: PriorityQueueElement = priorityEventQueue.take()
+    indexSet.remove(top.index)
+    fixedSizeCollection.put(top.index, top.element)
     top
   }
 
@@ -121,7 +128,10 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
 
   override def clearAll(): Unit = priorityEventQueue synchronized {
     realSize = 0
+    index.set(0)
     priorityEventQueue.clear()
+    fixedSizeCollection.clear()
+    indexSet.clear()
   }
 
   override def get(event: SchedulerEvent): Option[SchedulerEvent] = {
@@ -141,12 +151,12 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
     priorityEventQueue synchronized {
       if (!indexSet.contains(index) && !fixedSizeCollection.containsKey(index)) {
         throw new IllegalArgumentException(
-          "The index " + index + " has already been deleted, now index must be better than " + timestamp
+          "The index " + index + " has already been deleted, now index must be better than " + index
         )
       }
       event = fixedSizeCollection.get(index).asInstanceOf[SchedulerEvent]
       if (event == null) {
-        val eventSeq = toIndexedSeq.filter(x => x.getTimestamp.equals(index)).seq
+        val eventSeq = toIndexedSeq.filter(x => x.getIndex.equals(index)).seq
         if (eventSeq.size > 0) event = eventSeq(0)
       }
     }
@@ -161,15 +171,22 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
 
   def toIndexedSeq: IndexedSeq[SchedulerEvent] = if (size == 0) {
     IndexedSeq.empty[SchedulerEvent]
-  } else priorityEventQueue synchronized { (0 until  size).map(x => priorityEventQueue.get(x).element.asInstanceOf[SchedulerEvent]).filter(x => x != None) }
+  } else {
+    priorityEventQueue synchronized {
+      priorityEventQueue
+        .toArray()
+        .map(_.asInstanceOf[PriorityQueueElement].element.asInstanceOf[SchedulerEvent])
+        .toIndexedSeq
+    }
+  }
 
   def add(event: SchedulerEvent): Int = {
     priorityEventQueue synchronized {
       // 每次添加的时候需要给计数器+1，优先级相同时，控制先进先出
-      event.setTimestamp(nextTimestamp())
-      addToPriorityQueue(PriorityQueueElement(event, event.getPriority, event.getTimestamp))
+      event.setIndex(index.addAndGet(1))
+      addToPriorityQueue(PriorityQueueElement(event, event.getPriority, event.getIndex))
     }
-    event.getTimestamp
+    event.getIndex
   }
 
   override def waitingSize: Int = size
@@ -216,9 +233,6 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    */
   override def take(): SchedulerEvent = {
     val t: Option[SchedulerEvent] = readLock synchronized {
-      while (waitingSize == 0) {
-        readLock.wait(1000)
-      }
       Option(getAndRemoveTop.element.asInstanceOf[SchedulerEvent])
     }
     writeLock synchronized { writeLock.notify() }
@@ -268,8 +282,8 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    * @return
    */
   override def peek(): Option[SchedulerEvent] = readLock synchronized {
-    if (waitingSize == 0 ) None
-    else Option(priorityEventQueue.get(0).element.asInstanceOf[SchedulerEvent])
+    if (waitingSize == 0) None
+    else Option(priorityEventQueue.peek().element.asInstanceOf[SchedulerEvent])
   }
 
   /**
@@ -282,106 +296,11 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
   override def peek(op: (SchedulerEvent) => Boolean): Option[SchedulerEvent] = {
     if (waitingSize == 0) None
     else {
-      val event: Option[SchedulerEvent] = Option(priorityEventQueue.get(0).element.asInstanceOf[SchedulerEvent])
+      val event: Option[SchedulerEvent] = Option(
+        priorityEventQueue.peek().element.asInstanceOf[SchedulerEvent]
+      )
       if (op(event.get)) event else None
     }
   }
 
-  /**
-   * 获取下一个计数器索引
-   * @return
-   */
-  private def nextTimestamp() = {
-    timestamp synchronized {
-      timestamp += 1
-      timestamp
-    }
-  }
-
-  // 节点上浮
-  private def siftUp(index: Int): Unit = {
-    var flag = true
-    var currentIndex = index
-    while ( {
-      currentIndex != 0 && flag
-    }) { // 当前节点
-      val currentValue: PriorityQueueElement = priorityEventQueue.get(currentIndex)
-      // 父索引
-      val parentIndex: Int = getParentIndex(currentIndex)
-      // 父节点
-      val parentValue: PriorityQueueElement = priorityEventQueue.get(parentIndex)
-      // 当前节点小于父节点则退出循环
-      if (currentValue.compareTo(parentValue) < 0) {
-        flag = false
-      } else {
-        // 当前节点大于等于父节点则交换位置
-        priorityEventQueue.set(parentIndex, currentValue)
-        priorityEventQueue.set(currentIndex, parentValue)
-        currentIndex = parentIndex
-      }
-
-    }
-  }
-
-  // 节点下沉
-  private def siftDown(index: Int): Unit = { // 当前节点没有左子节点则无需下沉
-    var currentIndex = index
-    var flag = true
-    while ( {
-      getLeftChildIndex(currentIndex) < size && flag
-    }) {
-      val currentValue: PriorityQueueElement = priorityEventQueue.get(currentIndex)
-      // 左子索引
-      val leftChildIndex: Int = getLeftChildIndex(currentIndex)
-      // 左子节点
-      val leftChildValue: PriorityQueueElement = priorityEventQueue.get(leftChildIndex)
-      // 右子索引
-      var rightChildIndex: Integer = null
-      // 右子节点
-      var rightChildValue: PriorityQueueElement = null
-      // 右子节点是否存在
-      if (getRightChildIndex(currentIndex) < size) {
-        rightChildIndex = getRightChildIndex(currentIndex)
-        rightChildValue = priorityEventQueue.get(rightChildIndex)
-      }
-      // 右子节点存在
-      if (null != rightChildIndex) { // 找出左右子节点较大节点
-        var biggerIndex: Int = rightChildIndex
-        if (leftChildValue.compareTo(rightChildValue) > 0) biggerIndex = leftChildIndex
-        // 较大节点小于当前节点则退出循环
-        val biggerValue: PriorityQueueElement = priorityEventQueue.get(biggerIndex)
-        if (biggerValue.compareTo(currentValue) < 0) {
-          flag = false
-        } else {
-          // 较大节点大于等于当前节点则交换位置
-          priorityEventQueue.set(currentIndex, biggerValue)
-          priorityEventQueue.set(biggerIndex, currentValue)
-          currentIndex = biggerIndex
-        }
-      }
-      else { // 右子节点不存在
-        // 左子节点小于当前节点则退出循环
-        if (leftChildValue.compareTo(currentValue) < 0) {
-          flag = false
-        } else {
-          // 左子节点大于等于当前节点则交换位置
-          priorityEventQueue.set(currentIndex, leftChildValue)
-          priorityEventQueue.set(leftChildIndex, currentValue)
-          currentIndex = leftChildIndex
-        }
-      }
-    }
-  }
-
-  // 获取左子节点索引
-  def getLeftChildIndex(currentIndex: Int): Int = currentIndex * 2 + 1
-
-  // 获取右子节点索引
-  def getRightChildIndex(currentIndex: Int): Int = currentIndex * 2 + 2
-
-  // 获取父节点索引
-  def getParentIndex(currentIndex: Int): Int = {
-    if (currentIndex == 0) throw new RuntimeException("root node has no parent")
-    (currentIndex - 1) / 2
-  }
 }

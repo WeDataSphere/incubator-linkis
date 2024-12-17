@@ -50,17 +50,9 @@ class FIFOConsumerManager(groupName: String) extends ConsumerManager {
           MessageFormat.format(NEED_SUPPORTED_GROUP.getErrorDesc, group.getClass)
         )
     }
-    val fifoQueueStrategy: String = FIFO_QUEUE_STRATEGY.toLowerCase()
-    consumerQueue = fifoQueueStrategy match {
-      case "pfifo" =>
-        new PriorityLoopArrayQueue(
-          getSchedulerContext.getOrCreateGroupFactory.getOrCreateGroup(null)
-        )
-      case _ =>
-        new LoopArrayQueue(
-          getSchedulerContext.getOrCreateGroupFactory.getOrCreateGroup(null)
-        )
-    }
+    consumerQueue = new LoopArrayQueue(
+      getSchedulerContext.getOrCreateGroupFactory.getOrCreateGroup(null)
+    )
     consumer = createConsumer(groupName)
   }
 
