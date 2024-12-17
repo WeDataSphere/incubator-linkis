@@ -166,36 +166,36 @@ class HiveEngineConcurrentConnExecutor(
         val proc = CommandProcessorFactory.get(tokens, hiveConf)
         LOG.debug("ugi is " + ugi.getUserName)
         ugi.doAs(new PrivilegedExceptionAction[ExecuteResponse]() {
-            override def run(): ExecuteResponse = {
-              proc match {
-                case any if HiveDriverProxy.isDriver(any) =>
-                  logger.info(s"driver is $any")
+          override def run(): ExecuteResponse = {
+            proc match {
+              case any if HiveDriverProxy.isDriver(any) =>
+                logger.info(s"driver is $any")
 
-                  val driver = new HiveDriverProxy(any)
-                  if (StringUtils.isNotBlank(taskId)) {
-                    driverCache.put(taskId, driver)
-                  }
-                  executeHQL(
-                    engineExecutorContext.getJobId.get,
-                    engineExecutorContext,
-                    realCode,
-                    driver
-                  )
-                case _ =>
-                  val resp = proc.run(realCode.substring(tokens(0).length).trim)
-                  val result = new String(baos.toByteArray)
-                  logger.info("RESULT => {}", result)
-                  engineExecutorContext.appendStdout(result)
-                  baos.reset()
-                  if (resp.getResponseCode != 0) {
-                    onComplete()
-                    throw resp.getException
-                  }
+                val driver = new HiveDriverProxy(any)
+                if (StringUtils.isNotBlank(taskId)) {
+                  driverCache.put(taskId, driver)
+                }
+                executeHQL(
+                  engineExecutorContext.getJobId.get,
+                  engineExecutorContext,
+                  realCode,
+                  driver
+                )
+              case _ =>
+                val resp = proc.run(realCode.substring(tokens(0).length).trim)
+                val result = new String(baos.toByteArray)
+                logger.info("RESULT => {}", result)
+                engineExecutorContext.appendStdout(result)
+                baos.reset()
+                if (resp.getResponseCode != 0) {
                   onComplete()
-                  SuccessExecuteResponse()
-              }
+                  throw resp.getException
+                }
+                onComplete()
+                SuccessExecuteResponse()
             }
-          })
+          }
+        })
       }
     }
     val future: Future[ExecuteResponse] = backgroundOperationPool.submit(operation)
