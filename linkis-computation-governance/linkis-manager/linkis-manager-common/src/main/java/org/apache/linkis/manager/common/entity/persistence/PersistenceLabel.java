@@ -111,7 +111,11 @@ public class PersistenceLabel extends GenericLabel {
   @Override
   public int hashCode() {
     int result = this.getLabelKey().hashCode();
-    result = 31 * result + this.stringValue.hashCode();
+    String thisStringValue = getStringValue();
+    if (null == thisStringValue) {
+      return result;
+    }
+    result = 31 * result + thisStringValue.hashCode();
     return result;
   }
 }
