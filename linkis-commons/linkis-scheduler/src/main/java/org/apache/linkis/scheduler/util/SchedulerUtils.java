@@ -21,6 +21,8 @@ import org.apache.linkis.scheduler.conf.SchedulerConfiguration;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Locale;
+
 public class SchedulerUtils {
   private static final String EVENT_ID_SPLIT = "_";
   private static final String ALL_CREATORS = "ALL_CREATORS";
@@ -42,11 +44,13 @@ public class SchedulerUtils {
       return false;
     }
     String creators = SchedulerConfiguration.SUPPORT_PRIORITY_TASK_CREATORS();
+    creators = creators.toLowerCase();
+    users = users.toLowerCase();
     if (ALL_CREATORS.equalsIgnoreCase(creators)) {
-      return users.contains(userName);
+      return users.contains(userName.toLowerCase());
     } else {
       String creatorName = getCreatorFromGroupName(groupName);
-      return users.contains(userName) && creators.contains(creatorName);
+      return users.contains(userName) && creators.contains(creatorName.toLowerCase());
     }
   }
 
