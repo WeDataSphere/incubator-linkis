@@ -44,7 +44,7 @@ import org.apache.linkis.scheduler.executer.{AliasOutputExecuteResponse, OutputE
 import org.apache.linkis.storage.{LineMetaData, LineRecord}
 import org.apache.linkis.storage.resultset.{ResultSetFactory, ResultSetWriter}
 import org.apache.linkis.storage.resultset.table.TableResultSet
-
+import org.apache.linkis.engineconn.core.EngineConnObject
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 
@@ -191,15 +191,19 @@ class EngineExecutionContext(executor: ComputationExecutor, executorUser: String
   } else {
     var taskLog = log
     val limitLength = ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_LENGTH.getValue
-    if (
-        ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.getValue &&
-        log.length > limitLength
-    ) {
-      taskLog = s"${log.substring(0, limitLength)}..."
-      logger.info("The log is too long and will be intercepted,log limit length : {}", limitLength)
+    val limitEnableObj = properties.get(ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.key)
+    val limitEnable = if (limitEnableObj == null) ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.getValue else limitEnableObj.toString.toBoolean
+    if (limitEnable) {
+      if (log.length > limitLength) {
+        taskLog = s"${log.substring(0, limitLength)}..."
+        logger.info("The log is too long and will be intercepted,log limit length : {}", limitLength)
+      }
     }
     if (!AccessibleExecutorConfiguration.ENGINECONN_SUPPORT_PARALLELISM.getValue) {
-      LogHelper.cacheLog(taskLog)
+      val taskLogs = taskLog.split("\n")
+      taskLogs.foreach(line => {
+        LogHelper.cacheLog(line)
+      })
     } else {
       val listenerBus = getEngineSyncListenerBus
       getJobId.foreach(jId => listenerBus.postToAll(TaskLogUpdateEvent(jId, taskLog)))
