@@ -126,6 +126,7 @@ class PriorityLoopArrayQueueTest {
         }).start();
         Thread.sleep(threeMinutesInMillis * 2);
         System.out.println("product:" + productCounter.get() + ", consumer: " + consumerCounter.get());
+        Assertions.assertEquals(1000, queue.fixedSizeCollection().size());
         Assertions.assertEquals(productCounter.get(), consumerCounter.get());
     }
 
@@ -144,10 +145,12 @@ class PriorityLoopArrayQueueTest {
     //生产
     private void product(AtomicInteger counter, PriorityLoopArrayQueue queue) {
         int i1 = counter.addAndGet(1);
-        int priority = getRandom(10);
+        //1000-重要，100-普通，10-不重要
+        int[] proArr = {1000, 100, 10};
+        int priority = getRandom(3);
         String name = "item-" + i1 + "-" + priority;
         System.out.println("生产：" + name);
-        Option<Object> offer = queue.offer(getJob(name, priority));
+        Option<Object> offer = queue.offer(getJob(name, proArr[priority]));
         if (offer.nonEmpty()) {
             productCounter.addAndGet(1);
             Option<SchedulerEvent> schedulerEventOption = queue.get((int) offer.get());
