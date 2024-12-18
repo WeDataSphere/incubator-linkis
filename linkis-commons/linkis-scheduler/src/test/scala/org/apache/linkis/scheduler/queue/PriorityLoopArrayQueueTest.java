@@ -28,23 +28,21 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class PriorityLoopArrayQueueTest {
-    private volatile AtomicInteger ac = new AtomicInteger();
+    AtomicInteger productCounter = new AtomicInteger();
+    AtomicInteger consumerCounter = new AtomicInteger();
 
     @Test
     public void testConcurrentPutAndTake() throws Exception {
         AtomicInteger counter = new AtomicInteger();
-        FIFOGroup group = new FIFOGroup("test", 100, 100);
+        FIFOGroup group = new FIFOGroup("test", 5000, 5000);
         PriorityLoopArrayQueue queue = new PriorityLoopArrayQueue(group);
 
-        final long time = System.currentTimeMillis();
         // 获取开始时间的毫秒数
         long startTime = System.currentTimeMillis();
         // 三分钟的毫秒数
-        long threeMinutesInMillis = 1 * 60 * 1000;
-
-
-        int genLen = 2;
-        int getLen = 1;
+        long threeMinutesInMillis = 1 * 30 * 1000;
+        int genLen = 5;
+        int getLen = 7;
         final CountDownLatch latch = new CountDownLatch(genLen + getLen + 1);
         // 5 个生产者
         for (int i = 0; i < genLen; i++) {
@@ -61,7 +59,7 @@ class PriorityLoopArrayQueueTest {
                 while ((System.currentTimeMillis() - startTime) < threeMinutesInMillis) {
                     //生产
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(getRandom(200));
                         product(counter, queue);
                         product(counter, queue);
                     } catch (InterruptedException e) {
@@ -69,8 +67,8 @@ class PriorityLoopArrayQueueTest {
                     }
                     //消费
                     //consume(queue);
-
                 }
+                System.out.println(Thread.currentThread().getName() + "结束生产：");
             }, "生产t-" + i).start();
         }
         // 5 个消费者
@@ -78,7 +76,7 @@ class PriorityLoopArrayQueueTest {
             final int id = i;
             new Thread(() -> {
                 try{
-                    Thread.sleep(500 * id);
+                    Thread.sleep(getRandom(200));
                     latch.countDown();
                     latch.await();
                 } catch (InterruptedException e){
@@ -86,15 +84,13 @@ class PriorityLoopArrayQueueTest {
                 }
                 System.out.println(Thread.currentThread().getName() + "开始消费：");
                 while (true) {
-
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(getRandom(200));
                         //消费
                         consume(queue);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-
                 }
 
             }, "消费t-" + i).start();
@@ -116,7 +112,11 @@ class PriorityLoopArrayQueueTest {
                 }
                 IndexedSeq<SchedulerEvent> schedulerEventIndexedSeq = queue.toIndexedSeq();
                 //Object[] objects = queue.toArray();
+                System.out.println("生产大小：" + productCounter.get());
+                System.out.println("消费大小：" + consumerCounter.get());
                 System.out.println("队列当前大小：" + queue.size());
+                System.out.println("index size: " + queue.indexMap().size());
+                System.out.println("cache size: " + queue.fixedSizeCollection().size());
                 //Iterator<SchedulerEvent> it = schedulerEventIndexedSeq.iterator();
 //                while (it.hasNext()) {
 //                    SchedulerEvent event = it.next();
@@ -124,7 +124,9 @@ class PriorityLoopArrayQueueTest {
 //                }
             }
         }).start();
-        Thread.sleep(threeMinutesInMillis * 3);
+        Thread.sleep(threeMinutesInMillis * 2);
+        System.out.println("product:" + productCounter.get() + ", consumer: " + consumerCounter.get());
+        Assertions.assertEquals(productCounter.get(), consumerCounter.get());
     }
 
     //消费
@@ -132,6 +134,7 @@ class PriorityLoopArrayQueueTest {
         SchedulerEvent take = null;
         try {
             take = queue.take();
+            consumerCounter.addAndGet(1);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -146,15 +149,17 @@ class PriorityLoopArrayQueueTest {
         System.out.println("生产：" + name);
         Option<Object> offer = queue.offer(getJob(name, priority));
         if (offer.nonEmpty()) {
-            System.out.println(offer);
+            productCounter.addAndGet(1);
+            Option<SchedulerEvent> schedulerEventOption = queue.get((int) offer.get());
+            printEvent("get：", schedulerEventOption.get());
         } else {
             System.out.println("当前队列已满，大小：" + queue.size());
         }
-
-        //Option<SchedulerEvent> schedulerEventOption = queue.get((int) offer.get());
-        //printEvent("生产-get：" + offer.get(), schedulerEventOption.get());
     }
+    @Test
+    void testFinally() {
 
+    }
     @Test
     void enqueue() {
         // 压测 offer take get

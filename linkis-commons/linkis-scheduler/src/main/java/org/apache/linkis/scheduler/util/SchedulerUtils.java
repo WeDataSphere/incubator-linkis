@@ -23,8 +23,16 @@ import org.apache.commons.lang3.StringUtils;
 
 public class SchedulerUtils {
   private static final String EVENT_ID_SPLIT = "_";
+  private static final String ALL_CREATORS = "ALL_CREATORS";
+  private static final String SPACIAL_USER_SPLIT = "_v_";
 
-  public static boolean isSupportPriorityUsers(String groupName) {
+  /**
+   * support priority queue with config username or creator
+   *
+   * @param groupName
+   * @return
+   */
+  public static boolean isSupportPriority(String groupName) {
     String users = SchedulerConfiguration.SUPPORT_PRIORITY_TASK_USERS();
     if (StringUtils.isEmpty(users)) {
       return false;
@@ -33,25 +41,42 @@ public class SchedulerUtils {
     if (StringUtils.isEmpty(userName)) {
       return false;
     }
-    return users.contains(userName);
-  }
-
-  public static String getGroupNameItem(String groupName, int index) {
-    if (StringUtils.isEmpty(groupName)) {
-      return "";
+    String creators = SchedulerConfiguration.SUPPORT_PRIORITY_TASK_CREATORS();
+    if (ALL_CREATORS.equalsIgnoreCase(creators)) {
+      return users.contains(userName);
+    } else {
+      String creatorName = getCreatorFromGroupName(groupName);
+      return users.contains(userName) && creators.contains(creatorName);
     }
-    String[] groupItems = groupName.split(EVENT_ID_SPLIT);
-    if (index < 0 || index >= groupItems.length) {
-      return "";
-    }
-    return groupItems[index];
   }
 
   public static String getUserFromGroupName(String groupName) {
-    return getGroupNameItem(groupName, 2);
+    if (groupName.contains(SPACIAL_USER_SPLIT)) {
+      int vIndex = groupName.lastIndexOf(SPACIAL_USER_SPLIT);
+      int lastIndex = groupName.lastIndexOf(EVENT_ID_SPLIT);
+      String user = groupName.substring(vIndex + 1, lastIndex);
+      return user;
+    }
+    String[] groupNames = groupName.split(EVENT_ID_SPLIT);
+    String user = groupNames[groupNames.length - 2];
+    return user;
   }
 
   public static String getEngineTypeFromGroupName(String groupName) {
-    return getGroupNameItem(groupName, 3);
+    String[] groupNames = groupName.split(EVENT_ID_SPLIT);
+    String ecType = groupNames[groupNames.length - 1];
+    return ecType;
+  }
+
+  public static String getCreatorFromGroupName(String groupName) {
+    if (groupName.contains(SPACIAL_USER_SPLIT)) {
+      int vIndex = groupName.lastIndexOf(SPACIAL_USER_SPLIT);
+      String creatorName = groupName.substring(0, vIndex);
+      return creatorName;
+    }
+    int lastIndex = groupName.lastIndexOf(EVENT_ID_SPLIT);
+    int secondLastIndex = groupName.lastIndexOf(EVENT_ID_SPLIT, lastIndex - 1);
+    String creatorName = groupName.substring(0, secondLastIndex);
+    return creatorName;
   }
 }

@@ -17,16 +17,48 @@
 
 package org.apache.linkis.scheduler.util
 
-import org.apache.linkis.scheduler.util.SchedulerUtils.{getEngineTypeFromGroupName, getUserFromGroupName}
+import org.apache.linkis.scheduler.util.SchedulerUtils.{
+  getCreatorFromGroupName,
+  getEngineTypeFromGroupName,
+  getUserFromGroupName
+}
+
 import org.junit.jupiter.api.{Assertions, Test}
 
 class TestSchedulerUtils {
+
   @Test
   def testShellDangerCode: Unit = {
-    val groupName = "exec_id018033linkis-cg-entrancegz.xg.bdplinkis110002.webank:9104APPName_hadoop_spark_0, taskId: 2392611"
-    val username: String = getUserFromGroupName(groupName)
-    val engineType: String = getEngineTypeFromGroupName(groupName)
+    var groupName = "IDE_hadoop_hive"
+    var username: String = getUserFromGroupName(groupName)
+    var engineType: String = getEngineTypeFromGroupName(groupName)
+    var creator: String = getCreatorFromGroupName(groupName)
     Assertions.assertEquals("hadoop", username)
-    Assertions.assertEquals("spark", engineType)
+    Assertions.assertEquals("hive", engineType)
+    Assertions.assertEquals("IDE", creator)
+    groupName = "APP_TEST_v_hadoop_hive"
+    username = getUserFromGroupName(groupName)
+    engineType = getEngineTypeFromGroupName(groupName)
+    creator = getCreatorFromGroupName(groupName)
+    Assertions.assertEquals("v_hadoop", username)
+    Assertions.assertEquals("hive", engineType)
+    Assertions.assertEquals("APP_TEST", creator)
+
+    groupName = "TEST_v_hadoop_hive"
+    username = getUserFromGroupName(groupName)
+    engineType = getEngineTypeFromGroupName(groupName)
+    creator = getCreatorFromGroupName(groupName)
+    Assertions.assertEquals("v_hadoop", username)
+    Assertions.assertEquals("hive", engineType)
+    Assertions.assertEquals("TEST", creator)
+
+    groupName = "APP_TEST_hadoop_hive"
+    username = getUserFromGroupName(groupName)
+    engineType = getEngineTypeFromGroupName(groupName)
+    creator = getCreatorFromGroupName(groupName)
+    Assertions.assertEquals("hadoop", username)
+    Assertions.assertEquals("hive", engineType)
+    Assertions.assertEquals("APP_TEST", creator)
   }
+
 }

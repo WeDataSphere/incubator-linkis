@@ -43,8 +43,11 @@ object SchedulerConfiguration {
   val SUPPORT_PRIORITY_TASK_USERS =
     CommonVars("linkis.fifo.queue.support.priority.users", "").getValue
 
+  val SUPPORT_PRIORITY_TASK_CREATORS =
+    CommonVars("linkis.fifo.queue.support.priority.creators", "ALL_CREATORS").getValue
+
   val MAX_PRIORITY_QUEUE_CACHE_SIZE =
-    CommonVars("linkis.fifo.priority.queue.max.cache.size", 5).getValue
+    CommonVars("linkis.fifo.priority.queue.max.cache.size", 1000).getValue
 
   val ENGINE_PRIORITY_RUNTIME_KEY = "wds.linkis.engine.runtime.priority"
 

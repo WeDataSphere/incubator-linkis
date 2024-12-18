@@ -26,7 +26,7 @@ import org.apache.linkis.scheduler.conf.SchedulerConfiguration.{
 import org.apache.linkis.scheduler.listener.ConsumerListener
 import org.apache.linkis.scheduler.queue._
 import org.apache.linkis.scheduler.queue.fifoqueue.FIFOUserConsumer
-import org.apache.linkis.scheduler.util.SchedulerUtils.isSupportPriorityUsers
+import org.apache.linkis.scheduler.util.SchedulerUtils.isSupportPriority
 
 import java.util.concurrent.{ExecutorService, TimeUnit}
 
@@ -121,7 +121,7 @@ class ParallelConsumerManager(maxParallelismUsers: Int, schedulerName: String)
                 val consumerQueue: ConsumeQueue =
                   if (
                       PFIFO_SCHEDULER_STRATEGY
-                        .equals(fifoQueueStrategy) && isSupportPriorityUsers(groupName)
+                        .equals(fifoQueueStrategy) && isSupportPriority(groupName)
                   ) {
                     new PriorityLoopArrayQueue(group)
                   } else new LoopArrayQueue(group)
