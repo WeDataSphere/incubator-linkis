@@ -21,7 +21,6 @@ import org.apache.linkis.scheduler.queue.fifoqueue.FIFOGroup;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import scala.Option;
-import scala.collection.IndexedSeq;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -110,23 +109,18 @@ class PriorityLoopArrayQueueTest {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                IndexedSeq<SchedulerEvent> schedulerEventIndexedSeq = queue.toIndexedSeq();
-                //Object[] objects = queue.toArray();
                 System.out.println("生产大小：" + productCounter.get());
                 System.out.println("消费大小：" + consumerCounter.get());
                 System.out.println("队列当前大小：" + queue.size());
-                System.out.println("index size: " + queue.indexMap().size());
-                System.out.println("cache size: " + queue.fixedSizeCollection().size());
-                //Iterator<SchedulerEvent> it = schedulerEventIndexedSeq.iterator();
-//                while (it.hasNext()) {
-//                    SchedulerEvent event = it.next();
-//                    printEvent("get:" , event);
-//                }
+                // 需要 去掉私有测试
+                //System.out.println("index size: " + queue.indexMap().size());
+                //System.out.println("cache size: " + queue.fixedSizeCollection().size());
             }
         }).start();
         Thread.sleep(threeMinutesInMillis * 2);
         System.out.println("product:" + productCounter.get() + ", consumer: " + consumerCounter.get());
-        Assertions.assertEquals(1000, queue.fixedSizeCollection().size());
+        // 需要 去掉私有测试
+        //Assertions.assertEquals(1000, queue.fixedSizeCollection().size());
         Assertions.assertEquals(productCounter.get(), consumerCounter.get());
     }
 

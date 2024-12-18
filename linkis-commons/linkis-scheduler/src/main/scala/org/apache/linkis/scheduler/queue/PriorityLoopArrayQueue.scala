@@ -73,14 +73,14 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
   private val index = new AtomicInteger
 
   /** 记录队列中当前所有元素索引，元素存入优先级队列时添加，从优先级队列移除时删除 */
-  val indexMap = new util.HashMap[Int, Any]()
+  private val indexMap = new util.HashMap[Int, SchedulerEvent]()
 
   /** 记录已经消费的元素，会有固定缓存大小，默认1000，元素从优先级队列移除时添加 */
-  val fixedSizeCollection =
-    new FixedSizeCollection[Integer, Any](SchedulerConfiguration.MAX_PRIORITY_QUEUE_CACHE_SIZE)
+  private val fixedSizeCollection =
+    new FixedSizeCollection[Integer, SchedulerEvent](
+      SchedulerConfiguration.MAX_PRIORITY_QUEUE_CACHE_SIZE
+    )
 
-  private val writeLock = new Array[Byte](0)
-  private val readLock = new Array[Byte](0)
   private val rwLock = new ReentrantReadWriteLock
 
   protected[this] var realSize = size
@@ -96,7 +96,9 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
   private def addToPriorityQueue(element: PriorityQueueElement): Boolean = {
     priorityEventQueue.offer(element)
     rwLock.writeLock.lock
-    Utils.tryFinally(indexMap.put(element.index, element))(rwLock.writeLock.unlock())
+    Utils.tryFinally(indexMap.put(element.index, element.element.asInstanceOf[SchedulerEvent]))(
+      rwLock.writeLock.unlock()
+    )
     true
   }
 
@@ -104,14 +106,14 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    * 从队列中获取并移除元素
    * @return
    */
-  private def getAndRemoveTop: PriorityQueueElement = {
+  private def getAndRemoveTop: SchedulerEvent = {
     val top: PriorityQueueElement = priorityEventQueue.take()
     rwLock.writeLock.lock
     Utils.tryFinally {
       indexMap.remove(top.index)
-      fixedSizeCollection.put(top.index, top.element)
+      fixedSizeCollection.put(top.index, top.element.asInstanceOf[SchedulerEvent])
     }(rwLock.writeLock.unlock())
-    top
+    top.element.asInstanceOf[SchedulerEvent]
   }
 
   override def remove(event: SchedulerEvent): Unit = {
@@ -153,15 +155,8 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
     }
     rwLock.readLock().lock()
     Utils.tryFinally {
-      var event: SchedulerEvent = fixedSizeCollection.get(index).asInstanceOf[SchedulerEvent]
-      if (event == null) {
-        event = indexMap
-          .get(index)
-          .asInstanceOf[PriorityQueueElement]
-          .element
-          .asInstanceOf[SchedulerEvent]
-      }
-      Option(event)
+      if (fixedSizeCollection.get(index) != null) Option(fixedSizeCollection.get(index))
+      else Option(indexMap.get(index))
     }(rwLock.readLock().unlock())
   }
 
@@ -197,13 +192,7 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    *   Return index subscript（返回index下标）
    */
   override def put(event: SchedulerEvent): Int = {
-    var index: Int = -1
-    writeLock synchronized {
-      while (isFull) writeLock.wait(1000)
-      index = add(event)
-    }
-    readLock synchronized { readLock.notify() }
-    index
+    add(event)
   }
 
   /**
@@ -212,15 +201,7 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    * @return
    */
   override def offer(event: SchedulerEvent): Option[Int] = {
-    var index: Int = -1
-    writeLock synchronized {
-      if (isFull) return None
-      else {
-        index = add(event)
-      }
-    }
-    readLock synchronized { readLock.notify() }
-    Some(index)
+    if (isFull) None else Some(add(event))
   }
 
   /**
@@ -230,7 +211,7 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    * @return
    */
   override def take(): SchedulerEvent = {
-    getAndRemoveTop.element.asInstanceOf[SchedulerEvent]
+    getAndRemoveTop
   }
 
   /**
@@ -242,13 +223,10 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    * @return
    */
   override def take(mills: Long): Option[SchedulerEvent] = {
-    val t: Option[SchedulerEvent] = readLock synchronized {
-      if (waitingSize == 0) readLock.wait(mills)
-      if (waitingSize == 0) return None
-      Option(getAndRemoveTop.element.asInstanceOf[SchedulerEvent])
+    if (waitingSize == 0) {
+      Thread.sleep(mills)
     }
-    writeLock synchronized { writeLock.notify() }
-    t
+    if (waitingSize == 0) None else Option(getAndRemoveTop)
   }
 
   /**
@@ -259,7 +237,7 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    */
   override def poll(): Option[SchedulerEvent] = {
     if (waitingSize == 0) None
-    else Option(getAndRemoveTop.element.asInstanceOf[SchedulerEvent])
+    else Option(getAndRemoveTop)
   }
 
   /**
@@ -268,9 +246,9 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    *
    * @return
    */
-  override def peek(): Option[SchedulerEvent] = readLock synchronized {
-    if (waitingSize == 0) None
-    else Option(priorityEventQueue.peek().element.asInstanceOf[SchedulerEvent])
+  override def peek(): Option[SchedulerEvent] = {
+    val ele: PriorityQueueElement = priorityEventQueue.peek()
+    if (ele == null) None else Option(ele.element.asInstanceOf[SchedulerEvent])
   }
 
   /**
@@ -281,13 +259,12 @@ class PriorityLoopArrayQueue(var group: Group) extends ConsumeQueue with Logging
    * @return
    */
   override def peek(op: (SchedulerEvent) => Boolean): Option[SchedulerEvent] = {
-    if (waitingSize == 0) None
-    else {
-      val event: Option[SchedulerEvent] = Option(
-        priorityEventQueue.peek().element.asInstanceOf[SchedulerEvent]
-      )
-      if (op(event.get)) event else None
-    }
+    val ele: PriorityQueueElement = priorityEventQueue.peek()
+    if (ele == null) return None
+    val event: Option[SchedulerEvent] = Option(
+      priorityEventQueue.peek().element.asInstanceOf[SchedulerEvent]
+    )
+    if (op(event.get)) event else None
   }
 
 }
