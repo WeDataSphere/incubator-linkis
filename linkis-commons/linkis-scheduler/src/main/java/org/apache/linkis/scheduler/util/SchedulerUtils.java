@@ -21,8 +21,6 @@ import org.apache.linkis.scheduler.conf.SchedulerConfiguration;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Locale;
-
 public class SchedulerUtils {
   private static final String EVENT_ID_SPLIT = "_";
   private static final String ALL_CREATORS = "ALL_CREATORS";
@@ -50,7 +48,7 @@ public class SchedulerUtils {
       return users.contains(userName.toLowerCase());
     } else {
       String creatorName = getCreatorFromGroupName(groupName);
-      return users.contains(userName) && creators.contains(creatorName.toLowerCase());
+      return users.contains(userName.toLowerCase()) && creators.contains(creatorName.toLowerCase());
     }
   }
 

@@ -20,12 +20,21 @@ package org.apache.linkis.scheduler.util
 import org.apache.linkis.scheduler.util.SchedulerUtils.{
   getCreatorFromGroupName,
   getEngineTypeFromGroupName,
-  getUserFromGroupName
+  getUserFromGroupName,
+  isSupportPriority
 }
 
 import org.junit.jupiter.api.{Assertions, Test}
 
 class TestSchedulerUtils {
+
+  @Test
+  def testIsSupportPriority: Unit = {
+    // set linkis.fifo.queue.support.priority.users=hadoop
+    // set linkis.fifo.queue.support.priority.creators=IDE  or ALL_CREATORS
+    val bool: Boolean = isSupportPriority("IdE_haDoop_hive")
+    Assertions.assertEquals(true, bool)
+  }
 
   @Test
   def testShellDangerCode: Unit = {
