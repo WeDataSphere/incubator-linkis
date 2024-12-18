@@ -192,17 +192,19 @@ class EngineExecutionContext(executor: ComputationExecutor, executorUser: String
   } else {
     var taskLog = log
     val limitLength = ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_LENGTH.getValue
-    if (
-        ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.getValue(
-          EngineConnObject.getEngineCreationContext.getOptions
-        ) &&
-        log.length > limitLength
-    ) {
-      taskLog = s"${log.substring(0, limitLength)}..."
-      logger.info("The log is too long and will be intercepted,log limit length : {}", limitLength)
+    val limitEnableObj = properties.get(ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.key)
+    val limitEnable = if (limitEnableObj == null) false else limitEnableObj.toString.toBoolean
+    if (limitEnable) {
+      if (log.length > limitLength) {
+        taskLog = s"${log.substring(0, limitLength)}..."
+        logger.info("The log is too long and will be intercepted,log limit length : {}", limitLength)
+      }
     }
     if (!AccessibleExecutorConfiguration.ENGINECONN_SUPPORT_PARALLELISM.getValue) {
-      LogHelper.cacheLog(taskLog)
+      val taskLogs = taskLog.split("\n")
+      taskLogs.foreach(line => {
+        LogHelper.cacheLog(line)
+      })
     } else {
       val listenerBus = getEngineSyncListenerBus
       getJobId.foreach(jId => listenerBus.postToAll(TaskLogUpdateEvent(jId, taskLog)))
