@@ -31,6 +31,7 @@ import org.apache.linkis.engineconn.acessible.executor.listener.event.{
 import org.apache.linkis.engineconn.acessible.executor.log.LogHelper
 import org.apache.linkis.engineconn.computation.executor.conf.ComputationExecutorConf
 import org.apache.linkis.engineconn.computation.executor.cs.CSTableResultSetWriter
+import org.apache.linkis.engineconn.core.EngineConnObject
 import org.apache.linkis.engineconn.executor.ExecutorExecutionContext
 import org.apache.linkis.engineconn.executor.entity.Executor
 import org.apache.linkis.engineconn.executor.listener.{
@@ -44,7 +45,7 @@ import org.apache.linkis.scheduler.executer.{AliasOutputExecuteResponse, OutputE
 import org.apache.linkis.storage.{LineMetaData, LineRecord}
 import org.apache.linkis.storage.resultset.{ResultSetFactory, ResultSetWriter}
 import org.apache.linkis.storage.resultset.table.TableResultSet
-import org.apache.linkis.engineconn.core.EngineConnObject
+
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.StringUtils
 
@@ -191,12 +192,21 @@ class EngineExecutionContext(executor: ComputationExecutor, executorUser: String
   } else {
     var taskLog = log
     val limitLength = ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_LENGTH.getValue
-    val limitEnableObj = properties.get(ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.key)
-    val limitEnable = if (limitEnableObj == null) ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.getValue else limitEnableObj.toString.toBoolean
+    val limitEnableObj =
+      properties.get(ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.key)
+    val limitEnable =
+      if (limitEnableObj == null) {
+        ComputationExecutorConf.ENGINE_SEND_LOG_TO_ENTRANCE_LIMIT_ENABLED.getValue
+      } else {
+        limitEnableObj.toString.toBoolean
+      }
     if (limitEnable) {
       if (log.length > limitLength) {
         taskLog = s"${log.substring(0, limitLength)}..."
-        logger.info("The log is too long and will be intercepted,log limit length : {}", limitLength)
+        logger.info(
+          "The log is too long and will be intercepted,log limit length : {}",
+          limitLength
+        )
       }
     }
     if (!AccessibleExecutorConfiguration.ENGINECONN_SUPPORT_PARALLELISM.getValue) {
