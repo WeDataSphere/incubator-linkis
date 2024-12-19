@@ -52,4 +52,10 @@ object HiveEngineConfiguration {
     "Specify the option parameter of the java process (please modify it carefully!!!)"
   )
 
+  val HIVE_QUEUE_NAME: String = "mapreduce.job.queuename"
+
+  val BDP_QUEUE_NAME: String = "wds.linkis.rm.yarnqueue"
+
+  val HIVE_TEZ_QUEUE_NAME: String = "tez.queue.name"
+
 }
