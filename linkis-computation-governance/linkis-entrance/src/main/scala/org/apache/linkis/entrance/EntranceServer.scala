@@ -21,10 +21,6 @@ import org.apache.linkis.common.exception.{ErrorException, LinkisException, Link
 import org.apache.linkis.common.log.LogUtils
 import org.apache.linkis.common.utils.{Logging, Utils}
 import org.apache.linkis.entrance.conf.EntranceConfiguration
-import org.apache.linkis.entrance.conf.EntranceConfiguration.{
-  ENABLE_JOB_TIMEOUT_CHECK,
-  ENTRANCE_TASK_TIMEOUT
-}
 import org.apache.linkis.entrance.cs.CSEntranceHelper
 import org.apache.linkis.entrance.errorcode.EntranceErrorCodeSummary._
 import org.apache.linkis.entrance.exception.{EntranceErrorException, SubmitFailedException}
@@ -35,7 +31,13 @@ import org.apache.linkis.entrance.utils.JobHistoryHelper
 import org.apache.linkis.governance.common.entity.job.JobRequest
 import org.apache.linkis.governance.common.utils.LoggerUtils
 import org.apache.linkis.protocol.constants.TaskConstant
+import org.apache.linkis.protocol.utils.TaskUtils
 import org.apache.linkis.rpc.Sender
+import org.apache.linkis.scheduler.conf.SchedulerConfiguration.{
+  ENGINE_PRIORITY_RUNTIME_KEY,
+  FIFO_QUEUE_STRATEGY,
+  PFIFO_SCHEDULER_STRATEGY
+}
 import org.apache.linkis.scheduler.queue.{Job, SchedulerEventState}
 import org.apache.linkis.server.conf.ServerConfiguration
 
@@ -174,6 +176,26 @@ abstract class EntranceServer extends Logging {
         )
       }
 
+      Utils.tryAndWarn {
+        // 如果是使用优先级队列，设置下优先级
+        val configMap = params
+          .getOrDefault(TaskConstant.PARAMS, new util.HashMap[String, AnyRef]())
+          .asInstanceOf[util.Map[String, AnyRef]]
+        val properties: util.Map[String, AnyRef] = TaskUtils.getRuntimeMap(configMap)
+        val fifoStrategy: String = FIFO_QUEUE_STRATEGY
+        if (
+            PFIFO_SCHEDULER_STRATEGY.equalsIgnoreCase(
+              fifoStrategy
+            ) && properties != null && !properties.isEmpty
+        ) {
+          val priorityValue: AnyRef = properties.get(ENGINE_PRIORITY_RUNTIME_KEY)
+          if (priorityValue != null) {
+            val value: Int = getPriority(priorityValue.toString)
+            job.setPriority(value)
+          }
+        }
+      }
+
       getEntranceContext.getOrCreateScheduler().submit(job)
       val msg = LogUtils.generateInfo(
         s"Job with jobId : ${jobRequest.getId} and execID : ${job.getId()} submitted "
@@ -292,6 +314,23 @@ abstract class EntranceServer extends Logging {
   if (timeoutCheck) {
     logger.info("Job time check is enabled")
     startTimeOutCheck()
+  }
+
+  val DOT = "."
+  val DEFAULT_PRIORITY = 100
+
+  private def getPriority(value: String): Int = {
+    var priority: Int = -1
+    Utils.tryAndWarn({
+      priority =
+        if (value.contains(DOT)) value.substring(0, value.indexOf(DOT)).toInt else value.toInt
+    })
+    if (priority < 0 || priority > Integer.MAX_VALUE - 1) {
+      logger.warn(s"illegal queue priority: ${value}")
+      DEFAULT_PRIORITY
+    } else {
+      priority
+    }
   }
 
 }
