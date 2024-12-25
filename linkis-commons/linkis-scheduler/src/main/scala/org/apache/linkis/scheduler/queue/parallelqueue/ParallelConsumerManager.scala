@@ -19,9 +19,14 @@ package org.apache.linkis.scheduler.queue.parallelqueue
 
 import org.apache.linkis.common.utils.{ByteTimeUtils, Logging, Utils}
 import org.apache.linkis.scheduler.conf.SchedulerConfiguration
+import org.apache.linkis.scheduler.conf.SchedulerConfiguration.{
+  FIFO_QUEUE_STRATEGY,
+  PFIFO_SCHEDULER_STRATEGY
+}
 import org.apache.linkis.scheduler.listener.ConsumerListener
 import org.apache.linkis.scheduler.queue._
 import org.apache.linkis.scheduler.queue.fifoqueue.FIFOUserConsumer
+import org.apache.linkis.scheduler.util.SchedulerUtils.isSupportPriority
 
 import java.util.concurrent.{ExecutorService, TimeUnit}
 
@@ -111,7 +116,16 @@ class ParallelConsumerManager(maxParallelismUsers: Int, schedulerName: String)
                 val newConsumer = createConsumer(groupName)
                 val group = getSchedulerContext.getOrCreateGroupFactory.getGroup(groupName)
                 newConsumer.setGroup(group)
-                newConsumer.setConsumeQueue(new LoopArrayQueue(group))
+                // 需要判断人员是否是指定部门
+                val consumerQueue: ConsumeQueue =
+                  if (
+                      PFIFO_SCHEDULER_STRATEGY
+                        .equalsIgnoreCase(FIFO_QUEUE_STRATEGY) && isSupportPriority(groupName)
+                  ) {
+                    logger.info(s"use priority queue: ${groupName}")
+                    new PriorityLoopArrayQueue(group)
+                  } else new LoopArrayQueue(group)
+                newConsumer.setConsumeQueue(consumerQueue)
                 consumerListener.foreach(_.onConsumerCreated(newConsumer))
                 newConsumer.start()
                 newConsumer

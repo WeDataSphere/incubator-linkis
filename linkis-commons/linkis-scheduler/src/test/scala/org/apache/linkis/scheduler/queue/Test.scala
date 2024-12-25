@@ -15,16 +15,32 @@
  * limitations under the License.
  */
 
-package org.apache.linkis.monitor.jobhistory.jobtime
+package org.apache.linkis.scheduler.queue
 
-import org.apache.linkis.common.utils.Logging
-import org.apache.linkis.monitor.core.ob.{Event, Observer}
+import java.util
+import java.util.{PriorityQueue, Queue}
 
-class StarrocksTimeKillAlertSender extends Observer with Logging {
+case class PriorityFIFOQueue() {
+  case class QueueItem(item: Queue[String], priority: Int)
 
-  /**
-   * Observer Pattern
-   */
-  override def update(e: Event, jobHistroyList: scala.Any): Unit = {}
+  import java.util.Comparator
+
+  val cNode: Comparator[QueueItem] = new Comparator[QueueItem]() {
+    override def compare(o1: QueueItem, o2: QueueItem): Int = o2.priority - o1.priority
+  }
+
+  private val queue = new PriorityQueue[QueueItem](cNode)
+  private var _size = 0
+  private var _count: Long = 0L
+
+  def size: Int = _size
+
+  def isEmpty: Boolean = _size == 0
+
+  def enqueue(item: String, priority: Int): Unit = {
+    val deque = new util.ArrayDeque[String]()
+    deque.add(item)
+    queue.add(QueueItem(deque, priority))
+  }
 
 }
