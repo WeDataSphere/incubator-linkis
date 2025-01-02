@@ -185,6 +185,9 @@ public class ConnectionManager {
     DruidDataSource datasource = new DruidDataSource();
     LOG.info("Database connection address information(数据库连接地址信息)=" + dbUrl);
     datasource.setUrl(dbUrl);
+    if (dbUrl.toLowerCase().contains("oracle")) {
+      datasource.setValidationQuery("SELECT 1 FROM DUAL");
+    }
     datasource.setUsername(username);
     if (AESUtils.LINKIS_DATASOURCE_AES_SWITCH.getValue()) {
       // decrypt
