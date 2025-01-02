@@ -165,7 +165,13 @@ class JDBCEngineConnExecutor(override val outputPrintLimit: Int, val id: Int)
       }
       logger.info(s"create statement is:  $statement")
       connectionManager.saveStatement(taskId, statement)
-      val isResultSetAvailable = statement.execute(code)
+      val properties: util.Map[String, String] = getJDBCRuntimeParams(engineExecutorContext)
+      val jdbcUrl: String = properties.get(JDBCEngineConnConstant.JDBC_URL)
+      var newCode = code
+      if (StringUtils.isNotBlank(jdbcUrl) && jdbcUrl.toLowerCase().contains("oracle")) {
+        newCode = code.replaceAll("(?i)limit[^;]*;?$", "").trim
+      }
+      val isResultSetAvailable = statement.execute(newCode)
       logger.info(s"Is ResultSet available ? : $isResultSetAvailable")
       if (monitor != null) {
         /* refresh progress */
