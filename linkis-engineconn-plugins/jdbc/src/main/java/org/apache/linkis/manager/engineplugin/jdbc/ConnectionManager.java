@@ -223,6 +223,9 @@ public class ConnectionManager {
         }
       }
     }
+    if (url.contains("oracle")) {
+      ((DruidDataSource)dataSource).setValidationQuery("SELECT 1 FROM DUAL");
+    }
     return dataSource.getConnection();
   }
 
