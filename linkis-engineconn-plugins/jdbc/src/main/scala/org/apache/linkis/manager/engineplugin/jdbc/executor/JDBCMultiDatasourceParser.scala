@@ -171,6 +171,8 @@ object JDBCMultiDatasourceParser extends Logging {
       case "postgresql" =>
         val instance: Object = dbConnParams.get("instance")
         jdbcUrl = String.format(POSTGRESQL_SQL_CONNECT_URL, host, port, instance)
+      case _ =>
+        jdbcUrl = s"jdbc:$dbType://$host:$port"
     }
     logger.info(s"jdbc ${dbType} connection_url: $jdbcUrl")
 
