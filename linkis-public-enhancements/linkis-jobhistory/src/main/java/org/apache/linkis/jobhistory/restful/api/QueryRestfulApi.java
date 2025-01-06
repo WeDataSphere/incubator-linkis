@@ -839,7 +839,7 @@ public class QueryRestfulApi {
         jobDiagnosis.setDiagnosisContent(diagnosisMsg);
         jobDiagnosis.setCreatedTime(new Date());
         jobDiagnosis.setUpdatedDate(new Date());
-        if (Constants.FINISHED_JOB_STATUS.contains(jobStatus)) {
+        if (TaskStatus.isComplete(TaskStatus.valueOf(jobStatus))) {
           jobDiagnosis.setOnlyRead("1");
         }
         jobHistoryDiagnosisService.insert(jobDiagnosis);
@@ -852,7 +852,7 @@ public class QueryRestfulApi {
           jobDiagnosis.setDiagnosisContent(diagnosisMsg);
           jobDiagnosis.setUpdatedDate(new Date());
           jobDiagnosis.setDiagnosisContent(diagnosisMsg);
-          if (Constants.FINISHED_JOB_STATUS.contains(jobStatus)) {
+          if (TaskStatus.isComplete(TaskStatus.valueOf(jobStatus))) {
             jobDiagnosis.setOnlyRead("1");
           }
           jobHistoryDiagnosisService.update(jobDiagnosis);
