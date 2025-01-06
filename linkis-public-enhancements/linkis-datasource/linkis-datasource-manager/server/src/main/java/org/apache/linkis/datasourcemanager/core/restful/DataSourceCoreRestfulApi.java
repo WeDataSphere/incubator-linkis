@@ -914,7 +914,7 @@ public class DataSourceCoreRestfulApi {
       HttpServletRequest request) {
     return RestfulApiHelper.doAndResponse(
         () -> {
-          String permissionUser = ModuleUserUtils.getOperationUser(request, "queryDataSourceWithConnectParms");
+          String permissionUser = ModuleUserUtils.getOperationUser(request, "queryDataSource");
 
           DataSourceVo dataSourceVo =
               new DataSourceVo(dataSourceName, dataSourceTypeId, identifies, createSystem);
@@ -941,6 +941,7 @@ public class DataSourceCoreRestfulApi {
             if (!AESUtils.LINKIS_DATASOURCE_AES_SWITCH.getValue()) {
               RestfulApiHelper.decryptPasswordKey(keyDefinitionList, connectParams);
             }
+            connectParams.remove(AESUtils.PASSWORD);
             dataSource.setConnectParams(connectParams);
           }
           return Message.ok().data("queryList", queryList).data("totalPage", pageInfo.getTotal());
