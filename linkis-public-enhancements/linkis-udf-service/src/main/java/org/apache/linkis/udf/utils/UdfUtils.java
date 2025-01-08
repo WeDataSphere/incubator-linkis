@@ -321,15 +321,11 @@ public class UdfUtils {
 
   public static List<String> extractPythonMethodNames(String udfPath) throws Exception {
     String localPath = udfPath.replace(StorageUtils$.MODULE$.FILE_SCHEMA(), "");
-    String python3Path = Utils.exec(new String[] {"which", "python3"});
-    if (StringUtils.isBlank(python3Path)) {
-      throw new UdfException(80043, "python3 not found");
-    }
     String exec =
         Utils.exec(
             (new String[] {
               "sudo",
-              python3Path,
+              Constants.PYTHON_PATH.getValue(),
               Configuration.getLinkisHome() + "/admin/" + "linkis_udf_get_python_methods.py",
               localPath
             }));
