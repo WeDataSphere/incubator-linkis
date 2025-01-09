@@ -376,7 +376,6 @@
     <profile>
       <id>eureka</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
         <property>
           <name>discovery</name>
           <value>eureka</value>
@@ -438,6 +437,7 @@
     <profile>
       <id>nacos</id>
       <activation>
+        <activeByDefault>true</activeByDefault>
         <property>
           <name>discovery</name>
           <value>nacos</value>
