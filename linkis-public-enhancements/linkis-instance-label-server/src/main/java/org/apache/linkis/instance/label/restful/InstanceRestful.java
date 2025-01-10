@@ -38,7 +38,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.cloud.netflix.eureka.EurekaServiceInstance;
+//import org.springframework.cloud.netflix.eureka.EurekaServiceInstance;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -171,40 +171,40 @@ public class InstanceRestful {
     return Message.ok().data("url", serviceRegistryURL);
   }
 
-  @ApiOperation(value = "getServiceInstances", response = Message.class)
-  @ApiImplicitParams({
-    @ApiImplicitParam(name = "serviceName", required = false, dataType = "String"),
-    @ApiImplicitParam(name = "hostName", required = false, dataType = "String"),
-    @ApiImplicitParam(name = "ip", required = false, dataType = "String"),
-    @ApiImplicitParam(name = "version", required = false, dataType = "String")
-  })
-  @RequestMapping(path = "/serviceInstances", method = RequestMethod.GET)
-  public Message getServiceInstance(
-      HttpServletRequest request,
-      @RequestParam(value = "serviceName", required = false) String serviceName,
-      @RequestParam(value = "hostName", required = false) String hostName,
-      @RequestParam(value = "ip", required = false) String ip,
-      @RequestParam(value = "version", required = false) String version) {
-    Stream<String> serviceStream = discoveryClient.getServices().stream();
-    serviceStream = serviceStream.filter(s -> s.toUpperCase().contains("LINKIS"));
-    if (StringUtils.isNotBlank(serviceName)) {
-      serviceStream =
-          serviceStream.filter(s -> s.toUpperCase().contains(serviceName.toUpperCase()));
-    }
-    Stream<EurekaServiceInstance> instanceList =
-        serviceStream
-            .flatMap(serviceId -> discoveryClient.getInstances(serviceId).stream())
-            .map(instance -> (EurekaServiceInstance) instance);
-    if (StringUtils.isNotBlank(ip)) {
-      instanceList = instanceList.filter(s -> s.getInstanceInfo().getIPAddr().equals(ip));
-    }
-    if (StringUtils.isNotBlank(hostName)) {
-      instanceList = instanceList.filter(s -> s.getInstanceInfo().getHostName().equals(hostName));
-    }
-    if (StringUtils.isNotBlank(version)) {
-      instanceList =
-          instanceList.filter(s -> s.getMetadata().get("linkis.app.version").contains(version));
-    }
-    return Message.ok().data("list", instanceList.collect(Collectors.toList()));
-  }
+//  @ApiOperation(value = "getServiceInstances", response = Message.class)
+//  @ApiImplicitParams({
+//    @ApiImplicitParam(name = "serviceName", required = false, dataType = "String"),
+//    @ApiImplicitParam(name = "hostName", required = false, dataType = "String"),
+//    @ApiImplicitParam(name = "ip", required = false, dataType = "String"),
+//    @ApiImplicitParam(name = "version", required = false, dataType = "String")
+//  })
+//  @RequestMapping(path = "/serviceInstances", method = RequestMethod.GET)
+//  public Message getServiceInstance(
+//      HttpServletRequest request,
+//      @RequestParam(value = "serviceName", required = false) String serviceName,
+//      @RequestParam(value = "hostName", required = false) String hostName,
+//      @RequestParam(value = "ip", required = false) String ip,
+//      @RequestParam(value = "version", required = false) String version) {
+//    Stream<String> serviceStream = discoveryClient.getServices().stream();
+//    serviceStream = serviceStream.filter(s -> s.toUpperCase().contains("LINKIS"));
+//    if (StringUtils.isNotBlank(serviceName)) {
+//      serviceStream =
+//          serviceStream.filter(s -> s.toUpperCase().contains(serviceName.toUpperCase()));
+//    }
+//    Stream<EurekaServiceInstance> instanceList =
+//        serviceStream
+//            .flatMap(serviceId -> discoveryClient.getInstances(serviceId).stream())
+//            .map(instance -> (EurekaServiceInstance) instance);
+//    if (StringUtils.isNotBlank(ip)) {
+//      instanceList = instanceList.filter(s -> s.getInstanceInfo().getIPAddr().equals(ip));
+//    }
+//    if (StringUtils.isNotBlank(hostName)) {
+//      instanceList = instanceList.filter(s -> s.getInstanceInfo().getHostName().equals(hostName));
+//    }
+//    if (StringUtils.isNotBlank(version)) {
+//      instanceList =
+//          instanceList.filter(s -> s.getMetadata().get("linkis.app.version").contains(version));
+//    }
+//    return Message.ok().data("list", instanceList.collect(Collectors.toList()));
+//  }
 }
