@@ -16,7 +16,7 @@
  */
 
 package org.apache.linkis.udf.api;
-import org.springframework.util.StringUtils;
+
 import org.apache.linkis.common.conf.Configuration;
 import org.apache.linkis.common.io.FsPath;
 import org.apache.linkis.server.Message;
@@ -45,6 +45,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -1446,10 +1447,6 @@ public class UDFRestfulApi {
   @RequestMapping(path = "/get-register-functions", method = RequestMethod.GET)
   public Message getRegisterFunctions(HttpServletRequest req, @RequestParam("path") String path)
       throws IOException {
-    // 使用正则校验path,防止命令注入漏洞
-    if (StringUtils.isEmpty(path) || !path.matches("^[a-zA-Z0-9_.-/:]+$")) {
-      return Message.error("path参数格式错误");
-    }
     if (StringUtils.endsWithIgnoreCase(path, Constants.FILE_EXTENSION_PY)
         || StringUtils.endsWithIgnoreCase(path, Constants.FILE_EXTENSION_SCALA)) {
       if (StringUtils.startsWithIgnoreCase(path, StorageUtils$.MODULE$.FILE_SCHEMA())) {
