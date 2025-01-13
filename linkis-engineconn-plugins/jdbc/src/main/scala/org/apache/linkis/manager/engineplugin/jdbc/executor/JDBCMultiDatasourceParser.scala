@@ -137,7 +137,7 @@ object JDBCMultiDatasourceParser extends Logging {
         MessageFormat.format(UNSUPPORTED_DS_TYPE.getErrorDesc, dbType)
       )
     }
-    if (CHANGE_DS_TYPE_TO_MYSQL) {
+    if (CHANGE_DS_TYPE_TO_MYSQL.contains(dbType)) {
       dbType = "mysql"
     }
 

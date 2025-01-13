@@ -32,7 +32,7 @@ object JDBCConfiguration {
 
   val JDBC_KERBEROS_ENABLE = CommonVars[Boolean]("wds.linkis.keytab.enable", false)
 
-  val CHANGE_DS_TYPE_TO_MYSQL = CommonVars[Boolean]("linkis.change.ds.type.to.mysql", true).getValue
+  val CHANGE_DS_TYPE_TO_MYSQL = CommonVars[String]("linkis.change.ds.type.to.mysql", "starrocks").getValue
 
   val DS_TYPES_TO_EXECUTE_TASK_BY_JDBC =
     CommonVars[String]("linkis.can.execute.task.ds.types.by.jdbc", "starrocks").getValue
