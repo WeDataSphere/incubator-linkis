@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package org.apache.linkis.metadata.hive.config;
+package org.apache.linkis.metadata.service;
 
-public interface DSEnum {
-  String FIRST_DATA_SOURCE = "firstDataSource";
-  String SECONDE_DATA_SOURCE = "secondDataSource";
-  String THIRD_DATA_SOURCE = "thirdDataSource";
+import java.util.List;
+
+public interface RangerPermissionService {
+  List<String> getDbsByUsername(String username) throws Exception;
 }

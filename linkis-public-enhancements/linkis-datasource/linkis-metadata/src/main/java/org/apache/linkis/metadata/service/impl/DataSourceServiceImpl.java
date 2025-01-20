@@ -26,6 +26,7 @@ import org.apache.linkis.metadata.hive.dao.HiveMetaDao;
 import org.apache.linkis.metadata.hive.dto.MetadataQueryParam;
 import org.apache.linkis.metadata.service.DataSourceService;
 import org.apache.linkis.metadata.service.HiveMetaWithPermissionService;
+import org.apache.linkis.metadata.service.RangerPermissionService;
 import org.apache.linkis.metadata.util.DWSConfig;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -62,21 +63,39 @@ public class DataSourceServiceImpl implements DataSourceService {
 
   @Autowired @Lazy HiveMetaWithPermissionService hiveMetaWithPermissionService;
 
+  @Autowired @Lazy RangerPermissionService rangerPermissionService;
+
   ObjectMapper jsonMapper = new ObjectMapper();
 
   private static String dbKeyword = DWSConfig.DB_FILTER_KEYWORDS.getValue();
 
-  @DataSource(name = DSEnum.FIRST_DATA_SOURCE)
   @Override
   public JsonNode getDbs(String userName, String permission) throws Exception {
-    List<String> dbs = hiveMetaWithPermissionService.getDbsOptionalUserName(userName, permission);
+    Set<String> hiveDbs = getHiveDbs(userName, permission);
+    try {
+      Set<String> rangerDbs = getRangerDbs(userName);
+      hiveDbs.addAll(rangerDbs);
+    } catch (Exception e) {
+      logger.error("Failed to list Ranger Dbs:", e);
+    }
     ArrayNode dbsNode = jsonMapper.createArrayNode();
-    for (String db : dbs) {
+    for (String db : hiveDbs) {
       ObjectNode dbNode = jsonMapper.createObjectNode();
       dbNode.put("dbName", db);
       dbsNode.add(dbNode);
     }
     return dbsNode;
+  }
+
+  @DataSource(name = DSEnum.THIRD_DATA_SOURCE)
+  public Set<String> getRangerDbs(String username) throws Exception {
+    return new HashSet<>(rangerPermissionService.getDbsByUsername(username));
+  }
+
+  @DataSource(name = DSEnum.FIRST_DATA_SOURCE)
+  public Set<String> getHiveDbs(String userName, String permission) throws Exception {
+    return new HashSet<>(
+        hiveMetaWithPermissionService.getDbsOptionalUserName(userName, permission));
   }
 
   @DataSource(name = DSEnum.FIRST_DATA_SOURCE)

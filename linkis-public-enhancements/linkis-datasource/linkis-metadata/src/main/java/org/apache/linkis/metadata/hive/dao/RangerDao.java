@@ -15,10 +15,13 @@
  * limitations under the License.
  */
 
-package org.apache.linkis.metadata.hive.config;
+package org.apache.linkis.metadata.hive.dao;
 
-public interface DSEnum {
-  String FIRST_DATA_SOURCE = "firstDataSource";
-  String SECONDE_DATA_SOURCE = "secondDataSource";
-  String THIRD_DATA_SOURCE = "thirdDataSource";
+import org.apache.linkis.metadata.domain.mdq.po.RangerPolicy;
+
+import java.util.List;
+
+public interface RangerDao {
+  List<RangerPolicy> getRangerPolicyText(
+      String userName, String policyType, List<String> filterParams);
 }
