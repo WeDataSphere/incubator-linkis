@@ -18,11 +18,12 @@
 package org.apache.linkis.metadata.hive.dao;
 
 import org.apache.ibatis.annotations.Param;
-import org.apache.linkis.metadata.domain.mdq.po.RangerPolicy;
 
 import java.util.List;
 
 public interface RangerDao {
   List<String> getRangerPolicyText(
-          @Param("userName") String userName, @Param("policyType")String policyType, @Param("filterParams") List<String> filterParams);
+      @Param("userName") String userName,
+      @Param("policyType") String policyType,
+      @Param("filterParams") List<String> filterParams);
 }

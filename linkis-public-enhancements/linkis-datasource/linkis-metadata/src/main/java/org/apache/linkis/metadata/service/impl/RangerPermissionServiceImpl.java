@@ -17,7 +17,6 @@
 
 package org.apache.linkis.metadata.service.impl;
 
-import org.apache.linkis.metadata.domain.mdq.po.RangerPolicy;
 import org.apache.linkis.metadata.hive.dao.RangerDao;
 import org.apache.linkis.metadata.service.RangerPermissionService;
 
@@ -37,8 +36,7 @@ public class RangerPermissionServiceImpl implements RangerPermissionService {
 
   @Override
   public List<String> getDbsByUsername(String username) throws Exception {
-    List<String> policyTextList =
-        rangerDao.getRangerPolicyText(username + "-hive", "0", null);
+    List<String> policyTextList = rangerDao.getRangerPolicyText(username + "-hive", "0", null);
     return null;
   }
 }
