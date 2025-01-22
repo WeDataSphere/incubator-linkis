@@ -37,7 +37,7 @@ public class RangerPermissionServiceImpl implements RangerPermissionService {
 
   @Override
   public List<String> getDbsByUsername(String username) throws Exception {
-    List<RangerPolicy> policyTextList =
+    List<String> policyTextList =
         rangerDao.getRangerPolicyText(username + "-hive", "0", null);
     return null;
   }

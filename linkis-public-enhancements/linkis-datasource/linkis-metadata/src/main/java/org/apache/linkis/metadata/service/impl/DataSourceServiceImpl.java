@@ -65,15 +65,17 @@ public class DataSourceServiceImpl implements DataSourceService {
 
   @Autowired @Lazy RangerPermissionService rangerPermissionService;
 
+  @Autowired DataSourceService dataSourceService;
+
   ObjectMapper jsonMapper = new ObjectMapper();
 
   private static String dbKeyword = DWSConfig.DB_FILTER_KEYWORDS.getValue();
 
   @Override
   public JsonNode getDbs(String userName, String permission) throws Exception {
-    Set<String> hiveDbs = getHiveDbs(userName, permission);
+    Set<String> hiveDbs = dataSourceService.getHiveDbs(userName, permission);
     try {
-      Set<String> rangerDbs = getRangerDbs(userName);
+      Set<String> rangerDbs = dataSourceService.getRangerDbs(userName);
       hiveDbs.addAll(rangerDbs);
     } catch (Exception e) {
       logger.error("Failed to list Ranger Dbs:", e);
@@ -88,11 +90,13 @@ public class DataSourceServiceImpl implements DataSourceService {
   }
 
   @DataSource(name = DSEnum.THIRD_DATA_SOURCE)
+  @Override
   public Set<String> getRangerDbs(String username) throws Exception {
     return new HashSet<>(rangerPermissionService.getDbsByUsername(username));
   }
 
   @DataSource(name = DSEnum.FIRST_DATA_SOURCE)
+  @Override
   public Set<String> getHiveDbs(String userName, String permission) throws Exception {
     return new HashSet<>(
         hiveMetaWithPermissionService.getDbsOptionalUserName(userName, permission));
