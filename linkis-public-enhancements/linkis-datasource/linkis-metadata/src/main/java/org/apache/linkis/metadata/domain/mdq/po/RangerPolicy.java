@@ -17,11 +17,14 @@
 
 package org.apache.linkis.metadata.domain.mdq.po;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RangerPolicy extends RangerBaseModelObject implements java.io.Serializable {
   public static final int POLICY_TYPE_ACCESS = 0;
   public static final int POLICY_TYPE_DATAMASK = 1;

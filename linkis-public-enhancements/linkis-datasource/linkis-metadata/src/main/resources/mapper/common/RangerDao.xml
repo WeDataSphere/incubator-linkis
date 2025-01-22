@@ -32,14 +32,14 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 
 <mapper namespace="org.apache.linkis.metadata.hive.dao.RangerDao">
-    <select id="getRangerPolicyText" resultType="java.util.List">
+    <select id="getRangerPolicyText" resultType="java.lang.String">
         SELECT xp.policy_text
         FROM x_service xs
         JOIN x_policy xp ON xs.id = xp.service
         WHERE xs.name = #{userName}
         AND xp.policy_type = #{policyType}
-        <if test="filterParam != null and filterParam.size() > 0">
-            <foreach collection="filterParam" item="param" separator=" AND ">
+        <if test="filterParams != null and filterParams.size() > 0">
+            <foreach collection="filterParams" item="param" separator=" AND ">
                 AND xp.policy_text LIKE CONCAT('%', #{param}, '%')
             </foreach>
         </if>

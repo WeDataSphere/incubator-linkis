@@ -17,12 +17,15 @@
 
 package org.apache.linkis.metadata.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.linkis.metadata.domain.mdq.po.RangerPolicy;
 import org.apache.linkis.metadata.hive.dao.RangerDao;
 import org.apache.linkis.metadata.service.RangerPermissionService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -34,9 +37,26 @@ public class RangerPermissionServiceImpl implements RangerPermissionService {
 
   @Autowired private RangerDao rangerDao;
 
+  private final ObjectMapper objectMapper = new ObjectMapper();
+
   @Override
   public List<String> getDbsByUsername(String username) throws Exception {
-    List<String> policyTextList = rangerDao.getRangerPolicyText(username + "-hive", "0", null);
-    return null;
+    List<String> rangerDbs = new ArrayList<>();
+    List<String> policyTextList =
+            rangerDao.getRangerPolicyText(username + "-hive", "0", new ArrayList<>());
+    for (String policyTextStr : policyTextList) {
+      RangerPolicy rangerPolicy = objectMapper.readValue(policyTextStr, RangerPolicy.class);
+      if (rangerPolicy == null || rangerPolicy.getResources() == null || !rangerPolicy.getResources().containsKey("database")) {
+        continue;
+      }
+      RangerPolicy.RangerPolicyResource databaseResource = rangerPolicy.getResources().get("database");
+      List<String> values = databaseResource.getValues();
+      for (String db : values) {
+        if (!"*".equals(db) && !"default".equals(db)) {
+          rangerDbs.add(db);
+        }
+      }
+    }
+    return rangerDbs;
   }
 }

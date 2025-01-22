@@ -17,8 +17,6 @@
 
 package org.apache.linkis.metadata.domain.mdq.po;
 
-import java.util.Date;
-
 public class RangerBaseModelObject implements java.io.Serializable {
   private static final long serialVersionUID = 1L;
 
@@ -27,8 +25,8 @@ public class RangerBaseModelObject implements java.io.Serializable {
   private Boolean isEnabled;
   private String createdBy;
   private String updatedBy;
-  private Date createTime;
-  private Date updateTime;
+  private String createTime;
+  private String updateTime;
   private Long version;
 
   public RangerBaseModelObject() {
@@ -80,19 +78,19 @@ public class RangerBaseModelObject implements java.io.Serializable {
     this.updatedBy = updatedBy;
   }
   /** @return the createTime */
-  public Date getCreateTime() {
+  public String getCreateTime() {
     return createTime;
   }
   /** @param createTime the createTime to set */
-  public void setCreateTime(Date createTime) {
+  public void setCreateTime(String createTime) {
     this.createTime = createTime;
   }
   /** @return the updateTime */
-  public Date getUpdateTime() {
+  public String getUpdateTime() {
     return updateTime;
   }
   /** @param updateTime the updateTime to set */
-  public void setUpdateTime(Date updateTime) {
+  public void setUpdateTime(String updateTime) {
     this.updateTime = updateTime;
   }
   /** @return the version */
