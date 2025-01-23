@@ -24,6 +24,6 @@ import java.util.List;
 public interface RangerDao {
   List<String> getRangerPolicyText(
       @Param("userName") String userName,
-      @Param("policyType") String policyType,
+      @Param("policyType") int policyType,
       @Param("filterParams") List<String> filterParams);
 }

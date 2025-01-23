@@ -17,12 +17,12 @@
 
 package org.apache.linkis.metadata.domain.mdq.po;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RangerPolicy extends RangerBaseModelObject implements java.io.Serializable {

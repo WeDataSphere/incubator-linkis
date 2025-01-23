@@ -39,7 +39,7 @@ public interface DataSourceService {
 
   JsonNode queryTables(MetadataQueryParam queryParam);
 
-  List<Map<String,Object>> queryHiveTables(MetadataQueryParam queryParam);
+  List<Map<String, Object>> queryHiveTables(MetadataQueryParam queryParam);
 
   List<String> queryRangerTables(MetadataQueryParam queryParam);
 

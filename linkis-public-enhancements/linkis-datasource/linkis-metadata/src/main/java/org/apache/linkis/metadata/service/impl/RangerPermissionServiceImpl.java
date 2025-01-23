@@ -17,7 +17,6 @@
 
 package org.apache.linkis.metadata.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.linkis.metadata.domain.mdq.po.RangerPolicy;
 import org.apache.linkis.metadata.hive.dao.RangerDao;
 import org.apache.linkis.metadata.hive.dto.MetadataQueryParam;
@@ -31,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,13 +46,17 @@ public class RangerPermissionServiceImpl implements RangerPermissionService {
   public List<String> getDbsByUsername(String username) throws Exception {
     List<String> rangerDbs = new ArrayList<>();
     List<String> policyTextList =
-            rangerDao.getRangerPolicyText(username + "-hive", "0", new ArrayList<>());
+        rangerDao.getRangerPolicyText(
+            username + "-hive", RangerPolicy.POLICY_TYPE_ACCESS, new ArrayList<>());
     for (String policyTextStr : policyTextList) {
       RangerPolicy rangerPolicy = objectMapper.readValue(policyTextStr, RangerPolicy.class);
-      if (rangerPolicy == null || rangerPolicy.getResources() == null || !rangerPolicy.getResources().containsKey("database")) {
+      if (rangerPolicy == null
+          || rangerPolicy.getResources() == null
+          || !rangerPolicy.getResources().containsKey("database")) {
         continue;
       }
-      RangerPolicy.RangerPolicyResource databaseResource = rangerPolicy.getResources().get("database");
+      RangerPolicy.RangerPolicyResource databaseResource =
+          rangerPolicy.getResources().get("database");
       List<String> values = databaseResource.getValues();
       for (String db : values) {
         if (!"*".equals(db) && !"default".equals(db)) {
@@ -67,10 +71,15 @@ public class RangerPermissionServiceImpl implements RangerPermissionService {
   public List<String> queryRangerTables(MetadataQueryParam queryParam) throws Exception {
     List<String> rangerTables = new ArrayList<>();
     List<String> policyTextList =
-            rangerDao.getRangerPolicyText(queryParam.getUserName() + "-hive", "0", Collections.singletonList(queryParam.getDbName()));
+        rangerDao.getRangerPolicyText(
+            queryParam.getUserName() + "-hive",
+            RangerPolicy.POLICY_TYPE_ACCESS,
+            Collections.singletonList(queryParam.getDbName()));
     for (String policyTextStr : policyTextList) {
       RangerPolicy rangerPolicy = objectMapper.readValue(policyTextStr, RangerPolicy.class);
-      if (rangerPolicy == null || rangerPolicy.getResources() == null ||!rangerPolicy.getResources().containsKey("table")) {
+      if (rangerPolicy == null
+          || rangerPolicy.getResources() == null
+          || !rangerPolicy.getResources().containsKey("table")) {
         continue;
       }
       RangerPolicy.RangerPolicyResource tableResource = rangerPolicy.getResources().get("table");
@@ -88,10 +97,15 @@ public class RangerPermissionServiceImpl implements RangerPermissionService {
   public List<String> queryRangerColumns(MetadataQueryParam queryParam) throws Exception {
     List<String> rangerColumns = new ArrayList<>();
     List<String> policyTextList =
-            rangerDao.getRangerPolicyText(queryParam.getUserName() + "-hive", "0", Arrays.asList(queryParam.getDbName(), queryParam.getTableName()));
+        rangerDao.getRangerPolicyText(
+            queryParam.getUserName() + "-hive",
+            RangerPolicy.POLICY_TYPE_ROWFILTER,
+            Arrays.asList(queryParam.getDbName(), queryParam.getTableName()));
     for (String policyTextStr : policyTextList) {
       RangerPolicy rangerPolicy = objectMapper.readValue(policyTextStr, RangerPolicy.class);
-      if (rangerPolicy == null || rangerPolicy.getResources() == null ||!rangerPolicy.getResources().containsKey("column")) {
+      if (rangerPolicy == null
+          || rangerPolicy.getResources() == null
+          || !rangerPolicy.getResources().containsKey("column")) {
         continue;
       }
       RangerPolicy.RangerPolicyResource columnResource = rangerPolicy.getResources().get("column");

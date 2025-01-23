@@ -156,7 +156,7 @@ public class DataSourceServiceImpl implements DataSourceService {
 
   @DataSource(name = DSEnum.FIRST_DATA_SOURCE)
   @Override
-  public List<Map<String,Object>> queryHiveTables(MetadataQueryParam queryParam) {
+  public List<Map<String, Object>> queryHiveTables(MetadataQueryParam queryParam) {
     return hiveMetaWithPermissionService.getTablesByDbNameAndOptionalUserName(queryParam);
   }
 
@@ -211,11 +211,11 @@ public class DataSourceServiceImpl implements DataSourceService {
       throw new RuntimeException(e);
     }
     List<String> rangerTables = dataSourceService.queryRangerTables(queryParam);
-    Set<String> tableNames = listTables.stream()
-        .map(table -> (String) table.get("NAME"))
-        .collect(Collectors.toSet());
+    Set<String> tableNames =
+            listTables.stream().map(table -> (String) table.get("NAME")).collect(Collectors.toSet());
     // 过滤掉ranger中有，hive中也有的表
-    rangerTables = rangerTables.stream()
+    rangerTables =
+      rangerTables.stream()
         .filter(rangerTable -> !tableNames.contains(rangerTable))
         .collect(Collectors.toList());
 

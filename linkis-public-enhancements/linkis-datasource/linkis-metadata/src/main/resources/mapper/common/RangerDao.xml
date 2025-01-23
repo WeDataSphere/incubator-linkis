@@ -36,12 +36,15 @@
         SELECT xp.policy_text
         FROM x_service xs
         JOIN x_policy xp ON xs.id = xp.service
-        WHERE xs.name = #{userName}
-        AND xp.policy_type = #{policyType}
-        <if test="filterParams != null and filterParams.size() > 0">
-            <foreach collection="filterParams" item="param" separator=" AND ">
-                AND xp.policy_text LIKE CONCAT('%', #{param}, '%')
-            </foreach>
-        </if>
+        <where>
+            xs.name = #{userName}
+            AND xp.policy_type = #{policyType}
+            <if test="filterParams != null and filterParams.size() > 0">
+                AND
+                <foreach collection="filterParams" item="param" separator=" AND ">
+                    xp.policy_text LIKE CONCAT('%', #{param}, '%')
+                </foreach>
+            </if>
+        </where>
     </select>
 </mapper>
