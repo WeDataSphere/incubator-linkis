@@ -184,16 +184,21 @@ public class DataSourceServiceImpl implements DataSourceService {
 
   @Override
   public JsonNode filterRangerColumns(JsonNode hiveColumns, List<String> rangerColumns) {
-    ArrayNode filteredColumns = jsonMapper.createArrayNode();
-    for (int i = 0; i < hiveColumns.size(); i++) {
-      JsonNode column = hiveColumns.get(i);
-      if (rangerColumns.contains(column.get("name").asText())) {
-        // 删除node
-        continue;
+    try {
+      ArrayNode filteredColumns = jsonMapper.createArrayNode();
+      for (int i = 0; i < hiveColumns.size(); i++) {
+        JsonNode column = hiveColumns.get(i);
+        if (rangerColumns.contains(column.get("name").asText())) {
+          // 删除node
+          continue;
+        }
+        filteredColumns.add(column);
       }
-      filteredColumns.add(column);
+      return filteredColumns;
+    } catch (Exception e) {
+      logger.error("Failed to filterRangerColumns:", e);
+      return hiveColumns;
     }
-    return filteredColumns;
   }
 
   @Override
