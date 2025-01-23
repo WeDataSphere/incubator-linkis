@@ -45,8 +45,10 @@ public class WorkspaceUtil {
   public static String allReg = "(.*?)";
 
   public static String filePathReg = "^[a-zA-Z0-9-\\d_.:/]+$";
+  public static String hiveFilePathReg = "\\/hive\\/warehouse\\/.*db\\/.*\\/";
 
   public static Pattern filePathRegexPattern = Pattern.compile(filePathReg);
+  public static Pattern hiveFilePathRegexPattern = Pattern.compile(hiveFilePathReg);
 
   public static List<LogLevel.Type> logReg = new ArrayList<>();
 
