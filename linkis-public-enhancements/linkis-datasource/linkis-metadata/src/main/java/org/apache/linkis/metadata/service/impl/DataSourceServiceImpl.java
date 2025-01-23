@@ -43,6 +43,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,14 +75,12 @@ public class DataSourceServiceImpl implements DataSourceService {
   @Override
   public JsonNode getDbs(String userName, String permission) throws Exception {
     Set<String> hiveDbs = dataSourceService.getHiveDbs(userName, permission);
-    try {
-      Set<String> rangerDbs = dataSourceService.getRangerDbs(userName);
-      hiveDbs.addAll(rangerDbs);
-    } catch (Exception e) {
-      logger.error("Failed to list Ranger Dbs:", e);
-    }
+    Set<String> rangerDbs = dataSourceService.getRangerDbs(userName);
+    hiveDbs.addAll(rangerDbs);
+    // 将hiveDbs根据String升序排序
+    List<String> sortedDbs = hiveDbs.stream().sorted().collect(Collectors.toList());
     ArrayNode dbsNode = jsonMapper.createArrayNode();
-    for (String db : hiveDbs) {
+    for (String db : sortedDbs) {
       ObjectNode dbNode = jsonMapper.createObjectNode();
       dbNode.put("dbName", db);
       dbsNode.add(dbNode);
@@ -91,8 +90,13 @@ public class DataSourceServiceImpl implements DataSourceService {
 
   @DataSource(name = DSEnum.THIRD_DATA_SOURCE)
   @Override
-  public Set<String> getRangerDbs(String username) throws Exception {
-    return new HashSet<>(rangerPermissionService.getDbsByUsername(username));
+  public Set<String> getRangerDbs(String username) {
+    try {
+      return new HashSet<>(rangerPermissionService.getDbsByUsername(username));
+    } catch (Exception e) {
+      logger.error("Failed to list Ranger Dbs:", e);
+      return new HashSet<>();
+    }
   }
 
   @DataSource(name = DSEnum.FIRST_DATA_SOURCE)
@@ -102,11 +106,12 @@ public class DataSourceServiceImpl implements DataSourceService {
         hiveMetaWithPermissionService.getDbsOptionalUserName(userName, permission));
   }
 
-  @DataSource(name = DSEnum.FIRST_DATA_SOURCE)
   @Override
-  public JsonNode getDbsWithTables(String userName) {
+  public JsonNode getDbsWithTables(String userName) throws Exception {
     ArrayNode dbNodes = jsonMapper.createArrayNode();
-    List<String> dbs = hiveMetaWithPermissionService.getDbsOptionalUserName(userName, null);
+    Set<String> dbs = dataSourceService.getHiveDbs(userName, null);
+    Set<String> rangerDbs = dataSourceService.getRangerDbs(userName);
+    dbs.addAll(rangerDbs);
     MetadataQueryParam queryParam = MetadataQueryParam.of(userName);
     for (String db : dbs) {
       if (StringUtils.isBlank(db) || db.contains(dbKeyword)) {
@@ -151,14 +156,63 @@ public class DataSourceServiceImpl implements DataSourceService {
 
   @DataSource(name = DSEnum.FIRST_DATA_SOURCE)
   @Override
+  public List<Map<String,Object>> queryHiveTables(MetadataQueryParam queryParam) {
+    return hiveMetaWithPermissionService.getTablesByDbNameAndOptionalUserName(queryParam);
+  }
+
+  @DataSource(name = DSEnum.THIRD_DATA_SOURCE)
+  @Override
+  public List<String> queryRangerTables(MetadataQueryParam queryParam) {
+    try {
+      return rangerPermissionService.queryRangerTables(queryParam);
+    } catch (Exception e) {
+      logger.error("Failed to get Ranger Tables:", e);
+      return new ArrayList<>();
+    }
+  }
+
+  @DataSource(name = DSEnum.THIRD_DATA_SOURCE)
+  @Override
+  public List<String> getRangerColumns(MetadataQueryParam queryParam) {
+    try {
+      return rangerPermissionService.queryRangerColumns(queryParam);
+    } catch (Exception e) {
+      logger.error("Failed to get Ranger Columns:", e);
+      return new ArrayList<>();
+    }
+  }
+
+  @Override
+  public JsonNode filterRangerColumns(JsonNode hiveColumns, List<String> rangerColumns) {
+    ArrayNode filteredColumns = jsonMapper.createArrayNode();
+    for (int i = 0; i < hiveColumns.size(); i++) {
+      JsonNode column = hiveColumns.get(i);
+      if (rangerColumns.contains(column.get("name").asText())) {
+        // 删除node
+        continue;
+      }
+      filteredColumns.add(column);
+    }
+    return filteredColumns;
+  }
+
+  @Override
   public JsonNode queryTables(MetadataQueryParam queryParam) {
     List<Map<String, Object>> listTables;
     try {
-      listTables = hiveMetaWithPermissionService.getTablesByDbNameAndOptionalUserName(queryParam);
+      listTables = dataSourceService.queryHiveTables(queryParam);
     } catch (Throwable e) {
       logger.error("Failed to list Tables:", e);
       throw new RuntimeException(e);
     }
+    List<String> rangerTables = dataSourceService.queryRangerTables(queryParam);
+    Set<String> tableNames = listTables.stream()
+        .map(table -> (String) table.get("NAME"))
+        .collect(Collectors.toSet());
+    // 过滤掉ranger中有，hive中也有的表
+    rangerTables = rangerTables.stream()
+        .filter(rangerTable -> !tableNames.contains(rangerTable))
+        .collect(Collectors.toList());
 
     ArrayNode tables = jsonMapper.createArrayNode();
     for (Map<String, Object> table : listTables) {
@@ -169,6 +223,16 @@ public class DataSourceServiceImpl implements DataSourceService {
       tableNode.put("createdBy", (String) table.get("OWNER"));
       tableNode.put("createdAt", (Integer) table.get("CREATE_TIME"));
       tableNode.put("lastAccessAt", (Integer) table.get("LAST_ACCESS_TIME"));
+      tables.add(tableNode);
+    }
+    for (String rangerTable : rangerTables) {
+      ObjectNode tableNode = jsonMapper.createObjectNode();
+      tableNode.put("tableName", rangerTable);
+      tableNode.put("isView", false);
+      tableNode.put("databaseName", queryParam.getDbName());
+      tableNode.put("createdBy", "");
+      tableNode.put("createdAt", 0);
+      tableNode.put("lastAccessAt", 0);
       tables.add(tableNode);
     }
     return tables;

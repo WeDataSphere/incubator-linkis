@@ -17,8 +17,14 @@
 
 package org.apache.linkis.metadata.service;
 
+import org.apache.linkis.metadata.hive.dto.MetadataQueryParam;
+
 import java.util.List;
 
 public interface RangerPermissionService {
   List<String> getDbsByUsername(String username) throws Exception;
+
+  List<String> queryRangerTables(MetadataQueryParam queryParam) throws Exception;
+
+  List<String> queryRangerColumns(MetadataQueryParam queryParam) throws Exception;
 }

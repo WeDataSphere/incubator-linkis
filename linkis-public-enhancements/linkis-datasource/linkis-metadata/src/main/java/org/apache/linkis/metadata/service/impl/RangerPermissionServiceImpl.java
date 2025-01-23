@@ -20,12 +20,15 @@ package org.apache.linkis.metadata.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.linkis.metadata.domain.mdq.po.RangerPolicy;
 import org.apache.linkis.metadata.hive.dao.RangerDao;
+import org.apache.linkis.metadata.hive.dto.MetadataQueryParam;
 import org.apache.linkis.metadata.service.RangerPermissionService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -58,5 +61,47 @@ public class RangerPermissionServiceImpl implements RangerPermissionService {
       }
     }
     return rangerDbs;
+  }
+
+  @Override
+  public List<String> queryRangerTables(MetadataQueryParam queryParam) throws Exception {
+    List<String> rangerTables = new ArrayList<>();
+    List<String> policyTextList =
+            rangerDao.getRangerPolicyText(queryParam.getUserName() + "-hive", "0", Collections.singletonList(queryParam.getDbName()));
+    for (String policyTextStr : policyTextList) {
+      RangerPolicy rangerPolicy = objectMapper.readValue(policyTextStr, RangerPolicy.class);
+      if (rangerPolicy == null || rangerPolicy.getResources() == null ||!rangerPolicy.getResources().containsKey("table")) {
+        continue;
+      }
+      RangerPolicy.RangerPolicyResource tableResource = rangerPolicy.getResources().get("table");
+      List<String> values = tableResource.getValues();
+      for (String table : values) {
+        if (!"*".equals(table)) {
+          rangerTables.add(table);
+        }
+      }
+    }
+    return rangerTables;
+  }
+
+  @Override
+  public List<String> queryRangerColumns(MetadataQueryParam queryParam) throws Exception {
+    List<String> rangerColumns = new ArrayList<>();
+    List<String> policyTextList =
+            rangerDao.getRangerPolicyText(queryParam.getUserName() + "-hive", "0", Arrays.asList(queryParam.getDbName(), queryParam.getTableName()));
+    for (String policyTextStr : policyTextList) {
+      RangerPolicy rangerPolicy = objectMapper.readValue(policyTextStr, RangerPolicy.class);
+      if (rangerPolicy == null || rangerPolicy.getResources() == null ||!rangerPolicy.getResources().containsKey("column")) {
+        continue;
+      }
+      RangerPolicy.RangerPolicyResource columnResource = rangerPolicy.getResources().get("column");
+      List<String> values = columnResource.getValues();
+      for (String column : values) {
+        if (!"*".equals(column)) {
+          rangerColumns.add(column);
+        }
+      }
+    }
+    return rangerColumns;
   }
 }

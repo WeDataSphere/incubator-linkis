@@ -19,6 +19,7 @@ package org.apache.linkis.metadata.service;
 
 import org.apache.linkis.metadata.hive.dto.MetadataQueryParam;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,6 +38,14 @@ public interface DataSourceService {
   JsonNode getDbsWithTablesAndLastAccessAt(String userName) throws Exception;
 
   JsonNode queryTables(MetadataQueryParam queryParam);
+
+  List<Map<String,Object>> queryHiveTables(MetadataQueryParam queryParam);
+
+  List<String> queryRangerTables(MetadataQueryParam queryParam);
+
+  List<String> getRangerColumns(MetadataQueryParam queryParam);
+
+  JsonNode filterRangerColumns(JsonNode hiveColumns, List<String> rangerColumns);
 
   JsonNode queryTablesWithLastAccessAt(MetadataQueryParam queryParam);
 
