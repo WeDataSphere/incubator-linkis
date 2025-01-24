@@ -49,11 +49,9 @@ public class DWSConfig {
       LinkisStorageConf.HDFS_FILE_SYSTEM_REST_ERRS();
 
   public static CommonVars<String> RANGER_DB_URL =
-      CommonVars$.MODULE$.apply(
-          "ranger.db.url",
-          "jdbc:mysql://10.107.96.152:3306/ranger_gzpc_guardis_uat_01?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true");
+      CommonVars$.MODULE$.apply("ranger.db.url", "");
   public static CommonVars<String> RANGER_DB_USER =
-      CommonVars$.MODULE$.apply("ranger.db.user", "ranger_gzpc_guardis_uat_01");
+      CommonVars$.MODULE$.apply("ranger.db.user", "");
   public static CommonVars<String> RANGER_DB_PASSWORD =
-      CommonVars$.MODULE$.apply("ranger.db.password", "BdpGuardis@ranger2023");
+      CommonVars$.MODULE$.apply("ranger.db.password", "");
 }
