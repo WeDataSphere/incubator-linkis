@@ -29,7 +29,6 @@
   <modules>
     <module>hive</module>
     <module>spark</module>
-    <module>spark3</module>
     <module>python</module>
     <module>io_file</module>
     <module>shell</module>
