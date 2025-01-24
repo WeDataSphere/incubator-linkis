@@ -44,7 +44,7 @@ public class WorkspaceUtil {
           + "\\.\\d{3}\\s*ERROR(.*)";
   public static String allReg = "(.*?)";
 
-  public static String filePathReg = "^[a-zA-Z0-9-\\d_.:/]+$";
+  public static String filePathReg = "^[a-zA-Z0-9-\\d_.:,/=%]+$";
   public static String hiveFilePathReg = "\\/hive\\/warehouse\\/.*db\\/.*\\/";
 
   public static Pattern filePathRegexPattern = Pattern.compile(filePathReg);
