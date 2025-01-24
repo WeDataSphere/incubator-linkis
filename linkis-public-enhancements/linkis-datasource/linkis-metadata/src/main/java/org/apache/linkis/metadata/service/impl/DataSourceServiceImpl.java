@@ -215,9 +215,9 @@ public class DataSourceServiceImpl implements DataSourceService {
             listTables.stream().map(table -> (String) table.get("NAME")).collect(Collectors.toSet());
     // 过滤掉ranger中有，hive中也有的表
     rangerTables =
-      rangerTables.stream()
-        .filter(rangerTable -> !tableNames.contains(rangerTable))
-        .collect(Collectors.toList());
+            rangerTables.stream()
+                    .filter(rangerTable -> !tableNames.contains(rangerTable))
+                    .collect(Collectors.toList());
 
     ArrayNode tables = jsonMapper.createArrayNode();
     for (Map<String, Object> table : listTables) {
