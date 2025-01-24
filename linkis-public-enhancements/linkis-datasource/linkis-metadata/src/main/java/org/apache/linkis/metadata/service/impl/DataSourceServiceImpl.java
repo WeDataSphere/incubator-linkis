@@ -17,6 +17,7 @@
 
 package org.apache.linkis.metadata.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.linkis.common.utils.ByteTimeUtils;
 import org.apache.linkis.hadoop.common.utils.HDFSUtils;
 import org.apache.linkis.hadoop.common.utils.KerberosUtils;
@@ -240,7 +241,24 @@ public class DataSourceServiceImpl implements DataSourceService {
       tableNode.put("lastAccessAt", 0);
       tables.add(tableNode);
     }
+    // 将Arraynode根据tableName字段排序
+    tables = sortArrayNode(tables);
     return tables;
+  }
+
+  private ArrayNode sortArrayNode(ArrayNode tables) {
+    try {
+      List<JsonNode> tableArrays = jsonMapper.readValue(tables.toString(), new TypeReference<List<JsonNode>>() {});
+      tableArrays.sort(Comparator.comparing(node -> node.get("tableName").asText()));
+      ArrayNode sortedTables = jsonMapper.createArrayNode();
+      for (JsonNode table : tableArrays) {
+        sortedTables.add(table);
+      }
+      return sortedTables;
+    } catch (Exception e) {
+      logger.error("Exception occured when sorting tables: " + e);
+      return tables;
+    }
   }
 
   @DataSource(name = DSEnum.FIRST_DATA_SOURCE)
