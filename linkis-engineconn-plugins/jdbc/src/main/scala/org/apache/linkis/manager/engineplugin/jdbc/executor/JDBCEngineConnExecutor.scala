@@ -155,7 +155,7 @@ class JDBCEngineConnExecutor(override val outputPrintLimit: Int, val id: Int)
           if (keyValue.length == 2) {
             val key = keyValue(0)
             val value = keyValue(1)
-            parameters.put(key, value) // 直接将键值对添加到传入的 Map 中
+            parameters.put(key, value)
           }
         } catch {
           case e: Exception =>
