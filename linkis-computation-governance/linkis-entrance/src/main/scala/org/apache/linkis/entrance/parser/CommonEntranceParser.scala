@@ -38,6 +38,7 @@ import org.apache.linkis.protocol.constants.TaskConstant
 import org.apache.linkis.scheduler.queue.SchedulerEventState
 import org.apache.linkis.storage.script.VariableParser
 import org.apache.commons.lang3.StringUtils
+import org.apache.linkis.entrance.utils.EntranceUtils
 
 import java.util
 import java.util.Date
@@ -267,13 +268,12 @@ class CommonEntranceParser(val persistenceManager: PersistenceManager)
       labelBuilderFactory.createLabel[Label[_]](LabelKeyConstant.CODE_TYPE_KEY, runType)
     val variableMap =
       jobReq.getParams.get(VariableParser.VARIABLE).asInstanceOf[util.Map[String, String]]
-    if (variableMap.containsKey(LabelCommonConfig.SPARK3_ENGINE_VERSION)) {
-      val version = variableMap.get(LabelCommonConfig.SPARK3_ENGINE_VERSION)
-
-      version
-      Pattern.matches(JAVA_MEMORY_REGEX)
-
-
+    if (variableMap.containsKey(LabelCommonConfig.SPARK3_ENGINE_VERSION_CONF)) {
+      var version = variableMap.get(LabelCommonConfig.SPARK3_ENGINE_VERSION_CONF)
+      val pattern = Pattern.compile(EntranceUtils.sparkVersionRegex).matcher(version)
+      if (pattern.matches()) {
+        version = LabelCommonConfig.SPARK3_ENGINE_VERSION
+      }
       engineTypeLabel = EngineTypeLabelCreator.createEngineTypeLabel(
         EngineType.SPARK.toString,
         version
