@@ -59,6 +59,8 @@ public abstract class FileSystem implements Fs {
 
   public abstract long getBlockSize(FsPath dest) throws IOException;
 
+  public abstract long getBlockSize(FsPath dest) throws IOException;
+
   public abstract boolean canExecute(FsPath dest) throws IOException;
 
   public abstract boolean setOwner(FsPath dest, String user, String group) throws IOException;
