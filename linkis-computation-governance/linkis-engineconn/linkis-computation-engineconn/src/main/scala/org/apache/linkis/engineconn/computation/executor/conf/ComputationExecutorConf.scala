@@ -146,7 +146,7 @@ object ComputationExecutorConf {
     CommonVars("linkis.ec.spacial.udf.check.names", "")
 
   val SUPPORT_SPECIAL_UDF_LANGUAGES =
-    CommonVars("linkis.ec.support.spacial.udf.languages", "sql,python,scala")
+    CommonVars("linkis.ec.support.spacial.udf.languages", "sql,python")
 
   val ONLY_SQL_USE_UDF_KEY = "load.only.sql.use.udf"
 
