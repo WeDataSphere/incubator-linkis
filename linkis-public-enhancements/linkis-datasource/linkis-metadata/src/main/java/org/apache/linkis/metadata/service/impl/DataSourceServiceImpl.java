@@ -76,7 +76,7 @@ public class DataSourceServiceImpl implements DataSourceService {
   @Override
   public JsonNode getDbs(String userName, String permission) throws Exception {
     Set<String> hiveDbs = dataSourceService.getHiveDbs(userName, permission);
-    if (checkRangerConnection()) {
+    if (checkRangerConnectionConfig()) {
       Set<String> rangerDbs = dataSourceService.getRangerDbs(userName);
       hiveDbs.addAll(rangerDbs);
     }
@@ -214,7 +214,7 @@ public class DataSourceServiceImpl implements DataSourceService {
       throw new RuntimeException(e);
     }
     List<String> rangerTables = new ArrayList<>();
-    if (checkRangerConnection()) {
+    if (checkRangerConnectionConfig()) {
       rangerTables = dataSourceService.queryRangerTables(queryParam);
       Set<String> tableNames =
               listTables.stream().map(table -> (String) table.get("NAME")).collect(Collectors.toSet());
@@ -488,7 +488,7 @@ public class DataSourceServiceImpl implements DataSourceService {
   }
 
   @Override
-  public Boolean checkRangerConnection() {
+  public Boolean checkRangerConnectionConfig() {
     if (StringUtils.isNotBlank(DWSConfig.RANGER_DB_URL.getValue())
             && StringUtils.isNotBlank(DWSConfig.RANGER_DB_USER.getValue())
             && StringUtils.isNotBlank(DWSConfig.RANGER_DB_PASSWORD.getValue())) {

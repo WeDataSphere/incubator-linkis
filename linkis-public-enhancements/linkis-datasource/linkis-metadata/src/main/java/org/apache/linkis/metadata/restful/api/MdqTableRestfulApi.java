@@ -117,7 +117,7 @@ public class MdqTableRestfulApi {
         && mdqService.isExistInMdq(database, tableName, userName)) {
       tableFieldsInfo = mdqService.getTableFieldsInfoFromMdq(database, tableName, userName);
     }
-    if (dataSourceService.checkRangerConnection()) {
+    if (dataSourceService.checkRangerConnectionConfig()) {
       List<String> rangerColumns = dataSourceService.getRangerColumns(queryParam);
       if (CollectionUtils.isNotEmpty(rangerColumns)) {
         tableFieldsInfo =
