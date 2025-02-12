@@ -146,7 +146,8 @@ abstract class SparkEngineConnExecutor(val sc: SparkContext, id: Long)
     if (ready && StringUtils.isNotBlank(udfNames) && StringUtils.isNotBlank(jobId)) {
       val codeType: String = LabelUtil.getCodeType(engineExecutorContext.getLabels.toList.asJava)
       val languageType: String = CodeAndRunTypeUtils.getLanguageTypeByCodeType(codeType)
-      if (!CodeAndRunTypeUtils.LANGUAGE_TYPE_SQL.equals(languageType)) {
+      // sql 或者 python
+      if (!ComputationExecutorConf.SUPPORT_SPECIAL_UDF_LANGUAGES.getValue.contains(languageType)) {
         val udfNames: String = ComputationExecutorConf.SPECIAL_UDF_NAMES.getValue
         if (StringUtils.isNotBlank(udfNames)) {
           val funcNames: Array[String] = udfNames.split(",")
@@ -213,6 +214,8 @@ abstract class SparkEngineConnExecutor(val sc: SparkContext, id: Long)
         val pythonVersion = SparkConfiguration.SPARK_PYTHON_VERSION.getValue(
           EngineConnObject.getEngineCreationContext.getOptions
         )
+        val engineType =
+          LabelUtil.getEngineTypeLabel(engineExecutorContext.getLabels.toList.asJava).getStringValue
         val sb = new StringBuilder
         sb.append(s"spark.executor.instances=$executorNum\n")
         sb.append(s"spark.executor.memory=${executorMem}G\n")
@@ -222,6 +225,7 @@ abstract class SparkEngineConnExecutor(val sc: SparkContext, id: Long)
         sb.append(s"spark.yarn.queue=$queue\n")
         sb.append(s"spark.executor.memoryOverhead=${memoryOverhead}\n")
         sb.append(s"spark.python.version=$pythonVersion\n")
+        sb.append(s"spark.engineType=$engineType\n")
         sb.append("\n")
         engineExecutionContext.appendStdout(
           LogUtils.generateInfo(s" Your spark job exec with configs:\n${sb.toString()}")
