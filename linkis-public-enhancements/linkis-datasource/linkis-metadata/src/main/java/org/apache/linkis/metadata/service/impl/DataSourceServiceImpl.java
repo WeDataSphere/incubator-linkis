@@ -76,8 +76,10 @@ public class DataSourceServiceImpl implements DataSourceService {
   @Override
   public JsonNode getDbs(String userName, String permission) throws Exception {
     Set<String> hiveDbs = dataSourceService.getHiveDbs(userName, permission);
-    Set<String> rangerDbs = dataSourceService.getRangerDbs(userName);
-    hiveDbs.addAll(rangerDbs);
+    if (checkRangerConnection()) {
+      Set<String> rangerDbs = dataSourceService.getRangerDbs(userName);
+      hiveDbs.addAll(rangerDbs);
+    }
     // 将hiveDbs根据String升序排序
     List<String> sortedDbs = hiveDbs.stream().sorted().collect(Collectors.toList());
     ArrayNode dbsNode = jsonMapper.createArrayNode();
@@ -211,14 +213,17 @@ public class DataSourceServiceImpl implements DataSourceService {
       logger.error("Failed to list Tables:", e);
       throw new RuntimeException(e);
     }
-    List<String> rangerTables = dataSourceService.queryRangerTables(queryParam);
-    Set<String> tableNames =
-        listTables.stream().map(table -> (String) table.get("NAME")).collect(Collectors.toSet());
-    // 过滤掉ranger中有，hive中也有的表
-    rangerTables =
-        rangerTables.stream()
-            .filter(rangerTable -> !tableNames.contains(rangerTable))
-            .collect(Collectors.toList());
+    List<String> rangerTables = new ArrayList<>();
+    if (checkRangerConnection()) {
+      rangerTables = dataSourceService.queryRangerTables(queryParam);
+      Set<String> tableNames =
+              listTables.stream().map(table -> (String) table.get("NAME")).collect(Collectors.toSet());
+      // 过滤掉ranger中有，hive中也有的表
+      rangerTables =
+              rangerTables.stream()
+                      .filter(rangerTable -> !tableNames.contains(rangerTable))
+                      .collect(Collectors.toList());
+    }
 
     ArrayNode tables = jsonMapper.createArrayNode();
     for (Map<String, Object> table : listTables) {
@@ -480,5 +485,16 @@ public class DataSourceServiceImpl implements DataSourceService {
       }
     }
     return rootHdfs;
+  }
+
+  @Override
+  public Boolean checkRangerConnection() {
+    if (StringUtils.isNotBlank(DWSConfig.RANGER_DB_URL.getValue())
+            && StringUtils.isNotBlank(DWSConfig.RANGER_DB_USER.getValue())
+            && StringUtils.isNotBlank(DWSConfig.RANGER_DB_PASSWORD.getValue())) {
+      logger.debug("ranger db config exists, connection check success");
+      return true;
+    }
+    return false;
   }
 }
