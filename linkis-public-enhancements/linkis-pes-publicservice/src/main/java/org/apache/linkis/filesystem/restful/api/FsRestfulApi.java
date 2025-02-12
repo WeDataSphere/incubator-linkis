@@ -1453,7 +1453,7 @@ public class FsRestfulApi {
       return Message.error(MessageFormat.format(FILEPATH_ILLEGAL_SYMBOLS, filePath));
     }
     List<Map<String, Object>> resultMap = new ArrayList<>();
-    List<FsPath> list = fs.list(fsPath);
+    List<FsPath> list = fs.getAllFilePaths(fsPath);
     if (CollectionUtils.isNotEmpty(list)) {
       List<CompletableFuture<Void>> futures =
           list.stream()
