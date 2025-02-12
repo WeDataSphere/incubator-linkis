@@ -214,15 +214,19 @@ public class DataSourceServiceImpl implements DataSourceService {
       throw new RuntimeException(e);
     }
     List<String> rangerTables = new ArrayList<>();
-    if (checkRangerConnectionConfig()) {
-      rangerTables = dataSourceService.queryRangerTables(queryParam);
-      Set<String> tableNames =
-              listTables.stream().map(table -> (String) table.get("NAME")).collect(Collectors.toSet());
-      // 过滤掉ranger中有，hive中也有的表
-      rangerTables =
-              rangerTables.stream()
-                      .filter(rangerTable -> !tableNames.contains(rangerTable))
-                      .collect(Collectors.toList());
+    try {
+      if (checkRangerConnectionConfig()) {
+        rangerTables = dataSourceService.queryRangerTables(queryParam);
+        Set<String> tableNames =
+                listTables.stream().map(table -> (String) table.get("NAME")).collect(Collectors.toSet());
+        // 过滤掉ranger中有，hive中也有的表
+        rangerTables =
+                rangerTables.stream()
+                        .filter(rangerTable -> !tableNames.contains(rangerTable))
+                        .collect(Collectors.toList());
+      }
+    } catch (Exception e) {
+      logger.error("Failed to get Ranger Tables:", e);
     }
 
     ArrayNode tables = jsonMapper.createArrayNode();
