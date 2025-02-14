@@ -62,7 +62,7 @@ public class ByteTimeUtils {
       }
     }
 
-    boolean deleted = file.delete();
+    boolean deleted = file.delete(); // NOSONAR
     // Delete can also fail if the file simply did not exist.
     if (!deleted && file.exists()) {
       throw new IOException("Failed to delete: " + file.getAbsolutePath());

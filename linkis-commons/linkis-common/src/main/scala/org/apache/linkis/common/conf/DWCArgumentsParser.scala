@@ -121,5 +121,5 @@ class DWCArgumentsParser {
     this
   }
 
-  def validate(): Unit = {}
+  def validate(): Unit = {} // NOSONAR
 }

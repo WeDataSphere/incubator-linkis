@@ -104,7 +104,7 @@ public class LinkisUtils {
     }
   }
 
-  public static <T> void tryAndWarn(Runnable tryOp, Logger log) {
+  public static void tryAndWarn(Runnable tryOp, Logger log) {
     try {
       tryOp.run();
     } catch (Throwable error) {

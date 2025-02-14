@@ -26,11 +26,11 @@ public abstract class LinkisException extends Exception {
   static String hostname;
   static int hostPort;
 
-  public LinkisException(int errCode, String desc) {
+  protected LinkisException(int errCode, String desc) {
     this(errCode, desc, hostname, hostPort, applicationName);
   }
 
-  public LinkisException(int errCode, String desc, String ip, int port, String serviceKind) {
+  protected LinkisException(int errCode, String desc, String ip, int port, String serviceKind) {
     super(
         "errCode: "
             + errCode

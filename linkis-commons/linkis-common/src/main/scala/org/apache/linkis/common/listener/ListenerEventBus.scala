@@ -182,7 +182,6 @@ abstract class ListenerEventBus[L <: EventListener, E <: Event](
       // Call eventLock.release() so that listenerThread will poll `null` from `eventQueue` and know
       // `stop` is called.
       logger.info(s"try to stop $name thread.")
-      //      eventLock.release()
       listenerThread.cancel(true)
       eventDealThreads.foreach(_.shutdown())
     } else {
@@ -207,22 +206,20 @@ abstract class ListenerEventBus[L <: EventListener, E <: Event](
 
       override def run(): Unit = while (true) {
         val droppedEvents = droppedEventsCounter.get
-        if (droppedEvents > 0) {
+        if (droppedEvents > 0
+          && System.currentTimeMillis() - lastReportTimestamp >= 60 * 1000
+            && droppedEventsCounter.compareAndSet(droppedEvents, 0)) {
           // Don't log too frequently
-          if (System.currentTimeMillis() - lastReportTimestamp >= 60 * 1000) {
-            // There may be multiple threads trying to decrease droppedEventsCounter.
-            // Use "compareAndSet" to make sure only one thread can win.
-            // And if another thread is increasing droppedEventsCounter, "compareAndSet" will fail and
-            // then that thread will update it.
-            if (droppedEventsCounter.compareAndSet(droppedEvents, 0)) {
-              val prevLastReportTimestamp = lastReportTimestamp
-              lastReportTimestamp = System.currentTimeMillis()
-              logger.warn(
-                s"Dropped $droppedEvents ListenerEvents since " +
-                  DateFormatUtils.format(prevLastReportTimestamp, "yyyy-MM-dd HH:mm:ss")
-              )
-            }
-          }
+          // There may be multiple threads trying to decrease droppedEventsCounter.
+          // Use "compareAndSet" to make sure only one thread can win.
+          // And if another thread is increasing droppedEventsCounter, "compareAndSet" will fail and
+          // then that thread will update it.
+          val prevLastReportTimestamp = lastReportTimestamp
+          lastReportTimestamp = System.currentTimeMillis()
+          logger.warn(
+            s"Dropped $droppedEvents ListenerEvents since " +
+              DateFormatUtils.format(prevLastReportTimestamp, "yyyy-MM-dd HH:mm:ss")
+          )
         }
         Utils.tryQuietly(Thread.sleep(600000))
       }

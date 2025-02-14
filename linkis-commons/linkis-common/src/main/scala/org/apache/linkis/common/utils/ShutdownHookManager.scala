@@ -38,7 +38,7 @@ private[linkis] object ShutdownHookManager {
   def inShutdown(): Boolean = {
     try {
       val hook = new Thread {
-        override def run(): Unit = {}
+        override def run(): Unit = {} // NOSONAR
       }
       // scalastyle:off runtimeaddshutdownhook
       Runtime.getRuntime.addShutdownHook(hook)

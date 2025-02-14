@@ -31,24 +31,7 @@ class LinkisFrameErrorCodeSummaryTest {
   }
 
   @Test
-  void testSetErrorCode() {
-    VALIDATE_ERROR_CODE_FAILED.setErrorCode(-1);
-    assertEquals(-1, VALIDATE_ERROR_CODE_FAILED.getErrorCode());
-    VALIDATE_ERROR_CODE_FAILED.setErrorCode(10000);
-    assertEquals(10000, VALIDATE_ERROR_CODE_FAILED.getErrorCode());
-  }
-
-  @Test
   void testGetErrorDesc() {
-    assertEquals(
-        "Error code definition is incorrect(错误码定义有误)", VALIDATE_ERROR_CODE_FAILED.getErrorDesc());
-  }
-
-  @Test
-  void testSetErrorDesc() {
-    VALIDATE_ERROR_CODE_FAILED.setErrorDesc("test");
-    assertEquals("test", VALIDATE_ERROR_CODE_FAILED.getErrorDesc());
-    VALIDATE_ERROR_CODE_FAILED.setErrorDesc("Error code definition is incorrect(错误码定义有误)");
     assertEquals(
         "Error code definition is incorrect(错误码定义有误)", VALIDATE_ERROR_CODE_FAILED.getErrorDesc());
   }
@@ -61,26 +44,7 @@ class LinkisFrameErrorCodeSummaryTest {
   }
 
   @Test
-  void testSetComment() {
-    VALIDATE_ERROR_CODE_FAILED.setComment("test");
-    assertEquals("test", VALIDATE_ERROR_CODE_FAILED.getComment());
-    VALIDATE_ERROR_CODE_FAILED.setComment(
-        "Error code definition exceeds the maximum value or is less than the minimum value(错误码定义超过最大值或者小于最小值)");
-    assertEquals(
-        "Error code definition exceeds the maximum value or is less than the minimum value(错误码定义超过最大值或者小于最小值)",
-        VALIDATE_ERROR_CODE_FAILED.getComment());
-  }
-
-  @Test
   void testGetModule() {
-    assertEquals("linkis-frame", VALIDATE_ERROR_CODE_FAILED.getModule());
-  }
-
-  @Test
-  void testSetModule() {
-    VALIDATE_ERROR_CODE_FAILED.setModule("test");
-    assertEquals("test", VALIDATE_ERROR_CODE_FAILED.getModule());
-    VALIDATE_ERROR_CODE_FAILED.setModule("linkis-frame");
     assertEquals("linkis-frame", VALIDATE_ERROR_CODE_FAILED.getModule());
   }
 

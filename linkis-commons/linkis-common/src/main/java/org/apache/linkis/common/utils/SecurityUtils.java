@@ -85,7 +85,6 @@ public abstract class SecurityUtils {
    * @param host
    * @param port
    * @param username
-   * @param password
    * @param database
    * @param extraParams
    */
@@ -93,7 +92,6 @@ public abstract class SecurityUtils {
       String host,
       Integer port,
       String username,
-      String password,
       String database,
       Map<String, Object> extraParams) {
 

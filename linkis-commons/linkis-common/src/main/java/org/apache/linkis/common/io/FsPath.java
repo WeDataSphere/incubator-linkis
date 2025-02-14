@@ -173,10 +173,6 @@ public class FsPath {
     return FileSystems.getDefault().getPath(uri.toString());
   }
 
-  public boolean isOwner(String user) {
-    return owner.equals(user);
-  }
-
   public FsPath getParent() throws IOException {
     String path = uri.getPath();
     int lastSlash = path.lastIndexOf('/');

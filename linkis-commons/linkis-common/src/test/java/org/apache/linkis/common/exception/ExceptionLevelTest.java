@@ -32,27 +32,11 @@ class ExceptionLevelTest {
   }
 
   @Test
-  void testSetLevel() {
-    ExceptionLevel.WARN.setLevel(-1);
-    assertEquals(-1, ExceptionLevel.WARN.getLevel());
-    ExceptionLevel.WARN.setLevel(1);
-    assertEquals(1, ExceptionLevel.WARN.getLevel());
-  }
-
-  @Test
   void testGetName() {
     assertEquals("warn", ExceptionLevel.WARN.getName());
     assertEquals("error", ExceptionLevel.ERROR.getName());
     assertEquals("fatal", ExceptionLevel.FATAL.getName());
     assertEquals("retry", ExceptionLevel.RETRY.getName());
-  }
-
-  @Test
-  void testSetName() {
-    ExceptionLevel.ERROR.setName("testError");
-    assertEquals("testError", ExceptionLevel.ERROR.getName());
-    ExceptionLevel.ERROR.setName("error");
-    assertEquals("error", ExceptionLevel.ERROR.getName());
   }
 
   @Test

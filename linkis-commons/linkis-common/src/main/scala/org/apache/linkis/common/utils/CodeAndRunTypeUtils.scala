@@ -106,7 +106,6 @@ object CodeAndRunTypeUtils {
     val codeTypeAndRunTypeRelationMap = getCodeTypeAndLanguageTypeRelationMap
     if (codeTypeAndRunTypeRelationMap.isEmpty) Map()
     else {
-//      codeTypeAndRunTypeRelationMap.flatMap(x => x._2.map(y => (y, x._1)))
       val map = mutable.Map[String, String]()
       codeTypeAndRunTypeRelationMap.foreach(kv => {
         kv._2.foreach(v => map.put(v, kv._1))

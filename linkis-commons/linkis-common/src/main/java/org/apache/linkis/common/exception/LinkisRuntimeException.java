@@ -30,11 +30,11 @@ public abstract class LinkisRuntimeException extends RuntimeException {
   private int port;
   private String serviceKind;
 
-  public LinkisRuntimeException(int errCode, String desc) {
+  protected LinkisRuntimeException(int errCode, String desc) {
     this(errCode, desc, hostname, hostPort, applicationName);
   }
 
-  public LinkisRuntimeException(int errCode, String desc, String ip, int port, String serviceKind) {
+  protected LinkisRuntimeException(int errCode, String desc, String ip, int port, String serviceKind) {
     super(
         "errCode: "
             + errCode

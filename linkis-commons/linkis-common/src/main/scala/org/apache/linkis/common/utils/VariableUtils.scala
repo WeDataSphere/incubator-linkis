@@ -59,13 +59,13 @@ object VariableUtils extends Logging {
 
   def replace(replaceStr: String, variables: util.Map[String, Any]): String = {
     val nameAndType = mutable.Map[String, variable.VariableType]()
-    var run_date: CustomDateType = null
+    var runDate: CustomDateType = null
     variables.asScala.foreach {
       case (RUN_DATE, value) if !nameAndType.contains(RUN_DATE) =>
-        val run_date_str = value.asInstanceOf[String]
-        if (StringUtils.isNotEmpty(run_date_str)) {
-          run_date = new CustomDateType(run_date_str, false)
-          nameAndType(RUN_DATE) = variable.DateType(run_date)
+        val runDateStr = value.asInstanceOf[String]
+        if (StringUtils.isNotEmpty(runDateStr)) {
+          runDate = new CustomDateType(runDateStr, false)
+          nameAndType(RUN_DATE) = variable.DateType(runDate)
         }
       case (key, value: String) if !nameAndType.contains(key) && StringUtils.isNotEmpty(value) =>
         nameAndType(key) =
@@ -74,9 +74,9 @@ object VariableUtils extends Logging {
           )
       case _ =>
     }
-    if (!nameAndType.contains(RUN_DATE) || null == run_date) {
-      run_date = new CustomDateType(getYesterday(false), false)
-      nameAndType(RUN_DATE) = variable.DateType(new CustomDateType(run_date.toString, false))
+    if (!nameAndType.contains(RUN_DATE) || null == runDate) {
+      runDate = new CustomDateType(getYesterday(false), false)
+      nameAndType(RUN_DATE) = variable.DateType(new CustomDateType(runDate.toString, false))
     }
     if (variables.containsKey(RUN_TODAY_H)) {
       val runTodayHStr = variables.get(RUN_TODAY_H).asInstanceOf[String]
@@ -92,9 +92,9 @@ object VariableUtils extends Logging {
         nameAndType(RUN_TODAY_HOUR) = HourType(runTodayHour)
       }
     }
-    initAllDateVars(run_date, nameAndType)
+    initAllDateVars(runDate, nameAndType)
     val codeOperation = parserVar(replaceStr, nameAndType)
-    parserDate(codeOperation, run_date)
+    parserDate(codeOperation, runDate)
   }
 
   def replace(code: String, codeType: String, variables: util.Map[String, String]): String = {

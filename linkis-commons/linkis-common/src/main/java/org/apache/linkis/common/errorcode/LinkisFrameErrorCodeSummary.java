@@ -44,32 +44,16 @@ public enum LinkisFrameErrorCodeSummary {
     return errorCode;
   }
 
-  public void setErrorCode(int errorCode) {
-    this.errorCode = errorCode;
-  }
-
   public String getErrorDesc() {
     return errorDesc;
-  }
-
-  public void setErrorDesc(String errorDesc) {
-    this.errorDesc = errorDesc;
   }
 
   public String getComment() {
     return comment;
   }
 
-  public void setComment(String comment) {
-    this.comment = comment;
-  }
-
   public String getModule() {
     return module;
-  }
-
-  public void setModule(String module) {
-    this.module = module;
   }
 
   @Override
