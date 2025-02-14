@@ -60,6 +60,7 @@ public class YarnResourceRequester implements ExternalResourceRequester {
 
   private final String HASTATE_ACTIVE = "active";
   private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final JsonFactory factory = new JsonFactory();
   private final Map<String, String> rmAddressMap = new ConcurrentHashMap<>();
   private final String queuePrefix = EngineConnPluginConfiguration.QUEUE_PREFIX().getValue();
 
@@ -348,7 +349,6 @@ public class YarnResourceRequester implements ExternalResourceRequester {
   }
 
   public JsonNode parseJsonWithDuplicatesToJsonNode(String json) throws IOException {
-    JsonFactory factory = new JsonFactory();
     try (JsonParser parser = factory.createParser(json)) {
       if (parser.nextToken() != JsonToken.START_OBJECT) {
         throw new IllegalStateException("Expected content to be an object");
@@ -358,15 +358,14 @@ public class YarnResourceRequester implements ExternalResourceRequester {
   }
 
   private JsonNode parseObject(JsonParser parser) throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
-    ObjectNode rootNode = mapper.createObjectNode();
+    ObjectNode rootNode = objectMapper.createObjectNode();
     while (parser.nextToken() != JsonToken.END_OBJECT) {
       if (parser.currentToken() == JsonToken.FIELD_NAME) {
         String fieldName = parser.getCurrentName();
         parser.nextToken(); // 移动到值
         if (parser.currentToken() == JsonToken.START_ARRAY) {
           // 处理数组
-          ArrayNode arrayNode = mapper.createArrayNode();
+          ArrayNode arrayNode = objectMapper.createArrayNode();
           while (parser.nextToken() != JsonToken.END_ARRAY) {
             if (parser.currentToken() == JsonToken.START_OBJECT) {
               arrayNode.add(parseNestedObject(parser));
@@ -377,7 +376,7 @@ public class YarnResourceRequester implements ExternalResourceRequester {
           rootNode.set(fieldName, arrayNode);
         } else {
           // 处理普通字段
-          rootNode.set(fieldName, mapper.valueToTree(parseValue(parser)));
+          rootNode.set(fieldName, objectMapper.valueToTree(parseValue(parser)));
         }
       }
     }
@@ -385,8 +384,7 @@ public class YarnResourceRequester implements ExternalResourceRequester {
   }
 
   private JsonNode parseNestedObject(JsonParser parser) throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
-    ObjectNode nestedNode = mapper.createObjectNode();
+    ObjectNode nestedNode = objectMapper.createObjectNode();
     Map<String, List<Object>> fieldMap = new LinkedHashMap<>();
     while (parser.nextToken() != JsonToken.END_OBJECT) {
       if (parser.currentToken() == JsonToken.FIELD_NAME) {
@@ -403,12 +401,12 @@ public class YarnResourceRequester implements ExternalResourceRequester {
       List<Object> values = entry.getValue();
       if (values.size() == 1) {
         // 如果只有一个值，直接添加到节点
-        nestedNode.set(key, mapper.valueToTree(values.get(0)));
+        nestedNode.set(key, objectMapper.valueToTree(values.get(0)));
       } else {
         // 如果有多个值，创建数组节点
-        ArrayNode arrayNode = mapper.createArrayNode();
+        ArrayNode arrayNode = objectMapper.createArrayNode();
         for (Object value : values) {
-          arrayNode.add(mapper.valueToTree(value));
+          arrayNode.add(objectMapper.valueToTree(value));
         }
         nestedNode.set(key, arrayNode);
       }
@@ -441,8 +439,7 @@ public class YarnResourceRequester implements ExternalResourceRequester {
   }
 
   private ArrayNode parseArray(JsonParser parser) throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
-    ArrayNode arrayNode = mapper.createArrayNode();
+    ArrayNode arrayNode = objectMapper.createArrayNode();
     while (parser.nextToken() != JsonToken.END_ARRAY) {
       if (parser.currentToken() == JsonToken.START_OBJECT) {
         arrayNode.add(parseNestedObject(parser));
@@ -512,9 +509,14 @@ public class YarnResourceRequester implements ExternalResourceRequester {
     try {
       jsonNode = parseJsonWithDuplicatesToJsonNode(entityString);
     } catch (Exception e) {
-      logger.warn("getResponseByUrl failed", e);
-      throw new RMErrorException(
-          YARN_QUEUE_EXCEPTION.getErrorCode(), YARN_QUEUE_EXCEPTION.getErrorDesc(), e);
+      logger.warn("parse json with duplicates failed.", e);
+      try {
+        jsonNode = objectMapper.readTree(entityString);
+      } catch (Exception ie) {
+        logger.warn("origin parse json failed", ie);
+        throw new RMErrorException(
+            YARN_QUEUE_EXCEPTION.getErrorCode(), YARN_QUEUE_EXCEPTION.getErrorDesc(), ie);
+      }
     }
     return jsonNode;
   }
