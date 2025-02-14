@@ -46,7 +46,7 @@ public class TaskArchiveClear {
     List<String> cmdlist = new ArrayList<>();
     cmdlist.add("sh");
     cmdlist.add(MonitorConfig.shellPath + Constants.TASK_ARCHIVE_SH());
-    logger.info(Constants.TASK_ARCHIVE_SH()+"shell command {}", cmdlist);
+    logger.info(Constants.TASK_ARCHIVE_SH() + "shell command {}", cmdlist);
     String exec = ThreadUtils.run(cmdlist, Constants.TASK_ARCHIVE_SH());
     logger.info("shell log  {}", exec);
     logger.info("End to linkis_task_archive shell ");
