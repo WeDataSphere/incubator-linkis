@@ -180,7 +180,7 @@ public class DataSourceRestfulApi implements DataSourceRestfulRemote {
       @RequestParam(value = "table", required = false) String table,
       HttpServletRequest req) {
     String userName = ModuleUserUtils.getOperationUser(req, "get columns of table " + table);
-    JsonNode columns = null;
+    JsonNode columns;
     try {
       if (dataSourceService.checkRangerConnectionConfig()) {
         MetadataQueryParam queryParam =
