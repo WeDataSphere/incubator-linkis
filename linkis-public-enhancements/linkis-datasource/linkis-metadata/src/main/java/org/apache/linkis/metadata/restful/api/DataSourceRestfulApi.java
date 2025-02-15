@@ -21,6 +21,7 @@ import org.apache.linkis.metadata.hive.dto.MetadataQueryParam;
 import org.apache.linkis.metadata.restful.remote.DataSourceRestfulRemote;
 import org.apache.linkis.metadata.service.DataSourceService;
 import org.apache.linkis.metadata.service.HiveMetaWithPermissionService;
+import org.apache.linkis.metadata.util.DWSConfig;
 import org.apache.linkis.server.Message;
 import org.apache.linkis.server.utils.ModuleUserUtils;
 
@@ -179,16 +180,24 @@ public class DataSourceRestfulApi implements DataSourceRestfulRemote {
       @RequestParam(value = "table", required = false) String table,
       HttpServletRequest req) {
     String userName = ModuleUserUtils.getOperationUser(req, "get columns of table " + table);
-    MetadataQueryParam queryParam =
-        MetadataQueryParam.of(userName).withDbName(database).withTableName(table);
+    JsonNode columns = null;
     try {
-      JsonNode columns =
-          hiveMetaWithPermissionService.getColumnsByDbTableNameAndOptionalUserName(queryParam);
       if (dataSourceService.checkRangerConnectionConfig()) {
+        MetadataQueryParam queryParam =
+            MetadataQueryParam.of(DWSConfig.HIVE_DB_ADMIN_USER.getValue())
+                .withDbName(database)
+                .withTableName(table);
+        columns =
+            hiveMetaWithPermissionService.getColumnsByDbTableNameAndOptionalUserName(queryParam);
         List<String> rangerColumns = dataSourceService.getRangerColumns(queryParam);
         if (rangerColumns != null) {
           columns = dataSourceService.filterRangerColumns(columns, rangerColumns);
         }
+      } else {
+        MetadataQueryParam queryParam =
+            MetadataQueryParam.of(userName).withDbName(database).withTableName(table);
+        columns =
+            hiveMetaWithPermissionService.getColumnsByDbTableNameAndOptionalUserName(queryParam);
       }
       return Message.ok("").data("columns", columns);
     } catch (Exception e) {
