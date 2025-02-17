@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
 @Service
 public class RangerPermissionServiceImpl implements RangerPermissionService {
@@ -115,6 +116,10 @@ public class RangerPermissionServiceImpl implements RangerPermissionService {
             queryParam.getUserName() + "-hive",
             RangerPolicy.POLICY_TYPE_ACCESS,
             Arrays.asList(queryParam.getDbName(), queryParam.getTableName()));
+    if (CollectionUtils.isEmpty(policyTextList)) {
+      // 如果ranger侧没有配置权限，则展示所有字段
+      return null;
+    }
     for (String policyTextStr : policyTextList) {
       RangerPolicy rangerPolicy = objectMapper.readValue(policyTextStr, RangerPolicy.class);
       if (rangerPolicy == null
