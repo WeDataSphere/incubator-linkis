@@ -113,7 +113,7 @@ public class RangerPermissionServiceImpl implements RangerPermissionService {
     List<String> policyTextList =
         rangerDao.getRangerPolicyText(
             queryParam.getUserName() + "-hive",
-            RangerPolicy.POLICY_TYPE_ROWFILTER,
+            RangerPolicy.POLICY_TYPE_ACCESS,
             Arrays.asList(queryParam.getDbName(), queryParam.getTableName()));
     for (String policyTextStr : policyTextList) {
       RangerPolicy rangerPolicy = objectMapper.readValue(policyTextStr, RangerPolicy.class);
